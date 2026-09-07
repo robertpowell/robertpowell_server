@@ -7,6 +7,8 @@
   --measure:34rem;
   --mk-tile:#26304d; --mk-line:#eef1f7; --mk-o:#f0a55e;
 }
+/* Desktop: the page uses three quarters of the viewport; phones keep the full width. */
+@media (min-width:900px){ :root{ --measure:75vw; } }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --ground:#14130f; --surface:#1c1a16; --ink:#ece7de; --muted:#a7a196; --faint:#79736a;
