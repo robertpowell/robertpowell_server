@@ -333,7 +333,7 @@ def banned_section(rows, th):
             f'closeness summary above.</div></td></tr>')
 
 
-def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0):
+def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, status=""):
     banned_rows = [v for v in vis if v.get("banned")]
     vis = [v for v in vis if not v.get("banned")]
     guests = [v for v in vis if not v.get("known")]
@@ -413,6 +413,7 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0):
  {stat(len(banned_rows), "Banned", "#b3261e")}
  {stat(contacts, "Contacts sent", "#15803d" if contacts else FNT)}
  {stat(len(bots), "Bot hits", FNT)}</tr></table></td></tr>
+{status}
 
 <tr><td style="padding-top:22px">
  <div style="font:600 11px/1 ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;
@@ -446,6 +447,123 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0):
  a town centroid, not a person. Rows tagged <i>hosting</i> or <i>proxy</i> are machines.
  </div></td></tr>
 </table></td></tr></table></body></html>'''
+
+
+# ---------- box status: last backup + git state, shown on every report ----------
+RESTIC_LOG = "/var/log/restic-backup.log"
+REPO = "/srv/rp-server"
+GOOD, WARN, BAD = "#15803d", "#b45309", "#b3261e"
+
+
+def _run(cmd, timeout=20, env=None):
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+        return r.returncode, r.stdout.strip()
+    except Exception:
+        return 1, ""
+
+
+def backup_status():
+    """(colour, headline, detail) for the last restic run."""
+    now = datetime.now()
+    start = done = failed = None
+    try:
+        for ln in open(RESTIC_LOG, errors="replace"):
+            ts = ln[:19]
+            try:
+                t = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                continue
+            m = ln[20:].strip()
+            if m == "start":
+                start, done, failed = t, None, None
+            elif m == "done":
+                done = t
+            elif m.startswith("FAILED"):
+                failed = (t, m)
+    except FileNotFoundError:
+        return BAD, "No backup log", "restic has never run on this box"
+    # log times are UTC; show as local
+    off = now - datetime.utcnow()
+    snap = ""
+    env = dict(os.environ)
+    try:
+        for ln in open("/root/.restic.env"):
+            if "=" in ln and not ln.startswith("#"):
+                k, v = ln.rstrip("\n").split("=", 1); env[k] = v
+        env["RESTIC_PASSWORD_FILE"] = "/root/.restic-password"
+        env["RESTIC_CACHE_DIR"] = "/var/cache/restic"
+        rc, out = _run(["restic", "snapshots", "--json", "--latest", "1"], 25, env)
+        if rc == 0 and out:
+            sn = json.loads(out)
+            if sn:
+                sid = sn[-1]["short_id"]
+                rc2, st = _run(["restic", "stats", "--json", "--mode", "raw-data", sid], 40, env)
+                size = ""
+                if rc2 == 0 and st:
+                    b = json.loads(st).get("total_size", 0)
+                    size = f", {b / 2**30:.2f} GiB in the repository"
+                rc3, cnt = _run(["restic", "snapshots", "--json"], 25, env)
+                n = len(json.loads(cnt)) if rc3 == 0 and cnt else 0
+                snap = f"snapshot {sid}{size}, {n} kept"
+    except Exception:
+        pass
+    if failed and (not done or failed[0] > done):
+        return BAD, f"FAILED {(failed[0] + off):%a %H:%M}", failed[1][:120]
+    if done and start and done >= start:
+        age = now - (done + off)
+        if age > timedelta(hours=26):
+            return BAD, f"Last run {(done + off):%a %-d %b %H:%M}", "more than a day ago; " + (snap or "check the log")
+        return GOOD, f"OK {(done + off):%H:%M} today" if age < timedelta(hours=24) else f"OK {(done + off):%a %H:%M}", \
+            (snap or "completed") + f", took {(done - start).seconds // 60} min"
+    if start and not done:
+        return WARN, f"Running since {(start + off):%H:%M}", "or the last run was interrupted"
+    return BAD, "No completed run found", "check " + RESTIC_LOG
+
+
+def git_status():
+    """(colour, headline, detail) for the code checkout vs live files vs GitHub."""
+    if not os.path.isdir(os.path.join(REPO, ".git")):
+        return BAD, "No checkout", REPO + " is missing"
+    g = ["git", "-C", REPO]
+    _run(g + ["fetch", "--quiet"], 20)
+    rc, head = _run(g + ["rev-parse", "--short", "HEAD"])
+    _, dirty = _run(g + ["status", "--porcelain"])
+    _, ahead = _run(g + ["rev-list", "--count", "origin/main..main"])
+    _, behind = _run(g + ["rev-list", "--count", "main..origin/main"])
+    _, drift = _run(["bash", os.path.join(REPO, "deploy.sh")], 60)
+    drift_n = sum(1 for ln in drift.splitlines() if "/" in ln and not ln.startswith(("Nothing", "(dry")))
+    dirty_n = len(dirty.splitlines())
+    ahead, behind = int(ahead or 0), int(behind or 0)
+    probs = []
+    if drift_n:
+        probs.append(f"{drift_n} live file{'s' if drift_n != 1 else ''} differ{'s' if drift_n == 1 else ''} from the checkout (run pull-live.sh and commit)")
+    if dirty_n:
+        probs.append(f"{dirty_n} uncommitted change{'s' if dirty_n != 1 else ''} in the checkout")
+    if ahead:
+        probs.append(f"{ahead} commit{'s' if ahead != 1 else ''} not pushed")
+    if behind:
+        probs.append(f"GitHub is {behind} commit{'s' if behind != 1 else ''} ahead (run git pull, then deploy.sh)")
+    if probs:
+        return WARN, "Out of sync", "; ".join(probs)
+    return GOOD, f"In sync at {head}", "live files match the checkout, checkout matches GitHub"
+
+
+def status_html(bk, gt):
+    def row(lab, c, head, detail):
+        return (f'<tr><td width="10" bgcolor="{c}" style="width:10px;background:{c}">&nbsp;</td>'
+                f'<td style="padding:9px 12px;border-bottom:1px solid {RULE}">'
+                f'<span style="font:600 9px/1 ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;'
+                f'color:{FNT}">{lab}</span>&nbsp;&nbsp;'
+                f'<span style="font:600 13px -apple-system,Segoe UI,Arial,sans-serif;color:{c}">{esc(head)}</span>'
+                f'<div style="font:11px/1.5 ui-monospace,monospace;color:{MUT};margin-top:2px">{esc(detail)}</div></td></tr>')
+    return (f'<tr><td style="padding-top:16px"><table width="100%" cellpadding="0" cellspacing="0" '
+            f'style="background:{SURF};border:1px solid {RULE};border-collapse:collapse">'
+            f'{row("Backup", *bk)}{row("Code", *gt)}</table></td></tr>')
+
+
+def status_text(bk, gt):
+    return f"Backup: {bk[1]} ({bk[2]})\nCode:   {gt[1]} ({gt[2]})\n"
 
 
 def sender_for(label):
@@ -485,6 +603,8 @@ def main():
     ring.add(WATCH_OUTCODE)
 
     bans = banned()
+    bk, gt = backup_status(), git_status()
+    status = status_html(bk, gt)
     day = datetime.now().strftime("%A %-d %B %Y")
     tag = "[TEST] " if os.environ.get("REPORT_TEST") else ""
     only = os.environ.get("REPORT_SITE", "")
@@ -509,8 +629,8 @@ def main():
         if any(v.get("banned") for v in vis):
             text += "\n\nBanned by fail2ban:\n" + "\n".join(line(v) for v in vis if v.get("banned"))
         contacts = contacts_sent(label)
-        text = f"Contacts sent via the form: {contacts}\n\n" + text
-        send(subject, render_site(label, vis, pages, bots, day, home, ring, contacts), text,
+        text = status_text(bk, gt) + f"Contacts sent via the form: {contacts}\n\n" + text
+        send(subject, render_site(label, vis, pages, bots, day, home, ring, contacts, status), text,
              sender_for(label))
         sent += 1
         print(f"  {label}: sent — {len(guests)} visitors, {len(pages)} views, {len(bots)} bot")
