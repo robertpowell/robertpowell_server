@@ -1,0 +1,458 @@
+calendar-alt:
+  changes:
+    - '1'
+    - 5.0.0
+    - 5.6.0
+    - 5.7.0
+    - 5.10.2
+  label: Alternate Calendar
+  search:
+    terms:
+      - calendar
+      - date
+      - event
+      - schedule
+      - time
+      - when
+  styles:
+    - light
+  unicode: f073
+  voted: false
+car:
+  changes:
+    - '4.1'
+    - 5.0.0
+    - 5.2.0
+  label: Car
+  search:
+    terms:
+      - auto
+      - automobile
+      - sedan
+      - transportation
+      - travel
+      - vehicle
+  styles:
+    - light
+  unicode: f1b9
+  voted: false
+check:
+  changes:
+    - '1'
+    - 5.0.0
+  label: Check
+  search:
+    terms:
+      - accept
+      - agree
+      - checkmark
+      - confirm
+      - correct
+      - done
+      - notice
+      - notification
+      - notify
+      - ok
+      - select
+      - success
+      - tick
+      - todo
+      - 'yes'
+  styles:
+    - light
+  unicode: f00c
+  voted: false
+check-square:
+  changes:
+    - '3.1'
+    - 5.0.0
+  label: Check Square
+  search:
+    terms:
+      - accept
+      - agree
+      - checkmark
+      - confirm
+      - correct
+      - done
+      - ok
+      - select
+      - success
+      - tick
+      - todo
+      - 'yes'
+  styles:
+    - regular
+  unicode: f14a
+  voted: false
+clock:
+  changes:
+    - '1'
+    - 5.0.0
+    - 5.12.1
+  label: Clock
+  search:
+    terms:
+      - date
+      - late
+      - schedule
+      - time
+      - timer
+      - timestamp
+      - watch
+  styles:
+    - light
+  unicode: f017
+  voted: false
+door-open:
+  changes:
+    - 5.0.13
+  label: Door Open
+  search:
+    terms:
+      - enter
+      - exit
+      - welcome
+  styles:
+    - light
+  unicode: f52b
+  voted: true
+envelope:
+  changes:
+    - '2'
+    - 5.0.0
+    - 5.10.1
+    - 5.10.2
+  label: Envelope
+  search:
+    terms:
+      - e-mail
+      - email
+      - letter
+      - mail
+      - message
+      - notification
+      - support
+  styles:
+    - light
+  unicode: f0e0
+  voted: false
+envelope-open:
+  changes:
+    - '4.7'
+    - 5.0.0
+    - 5.10.1
+    - 5.10.2
+  label: Envelope Open
+  search:
+    terms:
+      - e-mail
+      - email
+      - letter
+      - mail
+      - message
+      - notification
+      - support
+  styles:
+    - light
+  unicode: f2b6
+  voted: false
+exclamation-triangle:
+  changes:
+    - '1'
+    - 5.0.0
+    - 5.6.1
+  label: Exclamation Triangle
+  search:
+    terms:
+      - alert
+      - danger
+      - error
+      - important
+      - notice
+      - notification
+      - notify
+      - problem
+      - warning
+  styles:
+    - duotone
+  unicode: f071
+  voted: false
+home:
+  changes:
+    - '1'
+    - 5.0.0
+    - 5.7.0
+  label: home
+  search:
+    terms:
+      - abode
+      - building
+      - house
+      - main
+  styles:
+    - light
+  unicode: f015
+  voted: false
+lock-alt:
+  changes:
+    - 5.0.0
+  label: Alternate Lock
+  search:
+    terms:
+      - admin
+      - lock
+      - open
+      - password
+      - private
+      - protect
+      - security
+  styles:
+    - light
+  unicode: f30d
+  voted: false
+map-marker-alt:
+  changes:
+    - 5.0.0
+  label: Alternate Map Marker
+  search:
+    terms:
+      - address
+      - coordinates
+      - destination
+      - gps
+      - localize
+      - location
+      - map
+      - navigation
+      - paper
+      - pin
+      - place
+      - point of interest
+      - position
+      - route
+      - travel
+  styles:
+    - light
+  unicode: f3c5
+  voted: false
+minus:
+  changes:
+    - '1'
+    - 5.0.0
+  label: minus
+  search:
+    terms:
+      - collapse
+      - delete
+      - hide
+      - minify
+      - negative
+      - remove
+      - trash
+  styles:
+    - light
+  unicode: f068
+  voted: false
+moon:
+  changes:
+    - '3.2'
+    - 5.0.0
+    - 5.11.0
+    - 5.11.1
+  label: Moon
+  search:
+    terms:
+      - contrast
+      - crescent
+      - dark
+      - lunar
+      - night
+  styles:
+    - light
+  unicode: f186
+  voted: false
+notes-medical:
+  changes:
+    - 5.0.7
+  label: Medical Notes
+  search:
+    terms:
+      - clipboard
+      - doctor
+      - ehr
+      - health
+      - history
+      - records
+  styles:
+    - light
+  unicode: f481
+  voted: false
+parking:
+  changes:
+    - 5.0.13
+  label: Parking
+  search:
+    terms:
+      - auto
+      - car
+      - garage
+      - meter
+  styles:
+    - light
+  unicode: f540
+  voted: true
+phone:
+  changes:
+    - '2'
+    - 5.0.0
+    - 5.10.1
+    - 5.10.2
+  label: Phone
+  search:
+    terms:
+      - call
+      - earphone
+      - number
+      - support
+      - telephone
+      - voice
+  styles:
+    - light
+    - solid
+  unicode: f095
+  voted: false
+plus:
+  changes:
+    - '1'
+    - 5.0.0
+    - 5.0.13
+  label: plus
+  search:
+    terms:
+      - add
+      - create
+      - expand
+      - new
+      - positive
+      - shape
+  styles:
+    - light
+  unicode: f067
+  voted: false
+plus-circle:
+  changes:
+    - '1'
+    - 5.0.0
+  label: Plus Circle
+  search:
+    terms:
+      - add
+      - create
+      - expand
+      - new
+      - positive
+      - shape
+  styles:
+    - light
+  unicode: f055
+  voted: false
+question-circle:
+  changes:
+    - '1'
+    - 5.0.0
+  label: Question Circle
+  search:
+    terms:
+      - help
+      - information
+      - support
+      - unknown
+  styles:
+    - light
+  unicode: f059
+  voted: false
+sun:
+  changes:
+    - '3.2'
+    - 5.0.0
+    - 5.5.0
+  label: Sun
+  search:
+    terms:
+      - brighten
+      - contrast
+      - day
+      - lighter
+      - sol
+      - solar
+      - star
+      - weather
+  styles:
+    - light
+  unicode: f185
+  voted: false
+times:
+  changes:
+    - '1'
+    - 5.0.0
+    - 5.0.13
+    - 5.11.0
+    - 5.11.1
+  label: Times
+  search:
+    terms:
+      - close
+      - cross
+      - error
+      - exit
+      - incorrect
+      - notice
+      - notification
+      - notify
+      - problem
+      - wrong
+      - x
+  styles:
+    - light
+  unicode: f00d
+  voted: false
+user:
+  changes:
+    - '1'
+    - 5.0.0
+    - 5.0.3
+    - 5.0.11
+  label: User
+  search:
+    terms:
+      - account
+      - avatar
+      - head
+      - human
+      - man
+      - person
+      - profile
+  styles:
+    - light
+  unicode: f007
+  voted: false
+users:
+  changes:
+    - '2'
+    - 5.0.0
+    - 5.0.3
+    - 5.0.11
+  label: Users
+  search:
+    terms:
+      - friends
+      - group
+      - people
+      - persons
+      - profiles
+      - team
+  styles:
+    - light
+  unicode: f0c0
+  voted: false

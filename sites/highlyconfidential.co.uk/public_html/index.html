@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="highlyconfidential.co.uk — coming soon">
+<title>highlyconfidential.co.uk</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f8fafc; --fg: #0f172a; --muted: #64748b; --line: #cbd5e1; --accent: #0f172a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0b1120; --fg: #e2e8f0; --muted: #94a3b8; --line: #1e293b; --accent: #e2e8f0; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: grid; place-items: center; padding: 2rem;
+  }
+  main { max-width: 34rem; text-align: center; }
+  .mark { width: 64px; height: 64px; margin: 0 auto 1.5rem; display: block; border-radius: 14px; }
+  h1 {
+    font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 600; letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+  }
+  h1 .tld { color: var(--muted); font-weight: 500; }
+  p { color: var(--muted); margin: 1rem 0 0; }
+  hr { border: 0; border-top: 1px solid var(--line); width: 4rem; margin: 1.75rem auto; }
+  footer { font-size: 0.8rem; color: var(--muted); }
+  footer a { color: var(--muted); }
+  .links { margin: 0 0 0.75rem; }
+  .links a { color: var(--fg); text-decoration: none; font-weight: 500; margin: 0 0.6rem; }
+  .links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main>
+  <picture>
+    <source srcset="/logo-mark-light.svg" media="(prefers-color-scheme: dark)">
+    <img class="mark" src="/logo-mark.svg" alt="" width="64" height="64">
+  </picture>
+  <h1>highlyconfidential<span class="tld">.co.uk</span></h1>
+  <hr>
+  <footer><div class="links"><a href="/contact.php">Contact</a> &middot; <a href="/privacy.php">Privacy</a></div>&copy; 2026 highlyconfidential.co.uk</footer>
+</main>
+</body>
+</html>

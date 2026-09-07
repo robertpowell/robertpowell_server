@@ -1,0 +1,22 @@
+# Secrets and runtime data never enter the repository. They are backed up by restic instead.
+*.db
+*.sqlite
+*.jsonl
+secret
+nonces/
+ratelimit.json
+blog.env
+.restic*
+*.pem
+*.key
+*.private
+etc/opendkim/keys/
+etc/postfix/sasl/
+*.bak
+*.bak.*
+*~
+__pycache__/
+*.pyc
+vendor/
+cache/
+.DS_Store

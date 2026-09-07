@@ -1,0 +1,5 @@
+# Daily visitor report across every vhost. 08:15, before the older
+# robertpowell.net PHP report at 09:00 so they don't collide on ip-api.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+15 8 * * * root /usr/local/bin/site-visitor-report.py >> /var/log/visitor-report-all.log 2>&1

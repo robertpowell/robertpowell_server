@@ -1,0 +1,13 @@
+# Paths restic skips. One pattern per line. See /usr/local/sbin/restic-backup.sh
+/var/www/backups
+/var/cache/restic
+/root/.cache
+/root/.npm
+/root/.claude/cache
+/root/.claude/debug
+/root/.claude/paste-cache
+/opt/ropo-blog/venv
+/mnt/ropo_volume/robertpowell-migration/unpacked
+/mnt/ropo_volume/robertpowell-migration/extract
+__pycache__
+*.pyc

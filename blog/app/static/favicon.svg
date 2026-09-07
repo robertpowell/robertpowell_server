@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    .tile{fill:#26304d}
+    .mark{stroke:#eef1f7}
+    .o{stroke:#f0a55e}
+    @media (prefers-color-scheme: dark){
+      .tile{fill:#38456b}
+      .mark{stroke:#f4f6fa}
+      .o{stroke:#f7b876}
+    }
+  </style>
+  <rect x="2" y="2" width="96" height="96" rx="20" class="tile"/>
+  <g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" class="mark"/>
+    <path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" class="mark"/>
+    <circle cx="70" cy="35" r="11" class="o"/>
+    <circle cx="70" cy="73" r="11" class="o"/>
+  </g>
+</svg>

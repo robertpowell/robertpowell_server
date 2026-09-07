@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Sign in — {{ site }}{% endblock %}
+{% block content %}
+<h1 class="page-title">Sign in</h1>
+<form method="post" class="form narrow">
+  <label for="pw">Password</label>
+  <input id="pw" type="password" name="password" autofocus autocomplete="current-password" required>
+  <button type="submit">Sign in</button>
+</form>
+{% endblock %}

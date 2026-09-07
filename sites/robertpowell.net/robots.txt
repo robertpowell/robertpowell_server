@@ -1,0 +1,4 @@
+User-agent: *
+
+allow: /
+sitemap: https://robertpowell.net/sitemap.xml

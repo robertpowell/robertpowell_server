@@ -1,0 +1,36 @@
+<?xml version="1.0" standalone="no"?>
+<!--
+Font Awesome Pro 5.13.0 by @fontawesome - https://fontawesome.com
+License - https://fontawesome.com/license (Commercial License)
+-->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+<metadata>
+Created by FontForge 20190801 at Tue Jan  5 20:00:16 2021
+ By root
+Copyright (c) Font Awesome
+</metadata>
+<defs>
+<font id="FontAwesome5Pro-Solid" horiz-adv-x="512" >
+  <font-face 
+    font-family="Font Awesome 5 Pro Solid"
+    font-weight="900"
+    font-stretch="normal"
+    units-per-em="512"
+    panose-1="2 0 5 3 0 0 0 0 0 0"
+    ascent="448"
+    descent="-64"
+    bbox="-0.0106255 -64 512 448.011"
+    underline-thickness="25"
+    underline-position="-50"
+    unicode-range="U+0020-F0C9"
+  />
+    <missing-glyph />
+    <glyph glyph-name="phone" unicode="&#xf095;" 
+d="M493.4 423.4c10.8994 -2.5 18.5996 -12.2002 18.5996 -23.4004c0 -256.5 -207.9 -464 -464 -464c-11.2998 0 -20.9004 7.7998 -23.4004 18.5996l-24 104c-2.59961 11.3008 3.30078 22.9004 14 27.6006l112 48c9.80078 4.2002 21.2002 1.39941 28 -6.90039
+l49.6006 -60.5996c78.2998 36.7002 141.2 100.5 177.2 177.2l-60.6006 49.5996c-8.2998 6.7002 -11.0996 18.2002 -6.89941 28l48 112c4.59961 10.5996 16.1992 16.5 27.5 13.9004z" />
+    <glyph glyph-name="bars" unicode="&#xf0c9;" horiz-adv-x="448" 
+d="M16 316c-8.83691 0 -16 7.16309 -16 16v40c0 8.83691 7.16309 16 16 16h416c8.83691 0 16 -7.16309 16 -16v-40c0 -8.83691 -7.16309 -16 -16 -16h-416zM16 156c-8.83691 0 -16 7.16309 -16 16v40c0 8.83691 7.16309 16 16 16h416c8.83691 0 16 -7.16309 16 -16v-40
+c0 -8.83691 -7.16309 -16 -16 -16h-416zM16 -4c-8.83691 0 -16 7.16309 -16 16v40c0 8.83691 7.16309 16 16 16h416c8.83691 0 16 -7.16309 16 -16v-40c0 -8.83691 -7.16309 -16 -16 -16h-416z" />
+  </font>
+</defs></svg>

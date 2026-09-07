@@ -1,0 +1,33 @@
+[Unit]
+Description=robertpowell.com blog (Flask/gunicorn)
+After=network.target
+
+[Service]
+Type=notify
+User=ropoblog
+Group=ropoblog
+WorkingDirectory=/opt/ropo-blog
+EnvironmentFile=/opt/ropo-blog/blog.env
+ExecStart=/opt/ropo-blog/venv/bin/gunicorn \
+    --workers 2 --threads 2 \
+    --bind 127.0.0.1:8404 \
+    --timeout 45 --graceful-timeout 20 \
+    --access-logfile - --error-logfile - \
+    --chdir /opt/ropo-blog/app \
+    blog:app
+Restart=on-failure
+RestartSec=3
+
+# hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ropo-blog/data
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+MemoryMax=200M
+
+[Install]
+WantedBy=multi-user.target

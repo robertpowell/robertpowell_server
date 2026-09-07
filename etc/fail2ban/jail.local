@@ -1,0 +1,136 @@
+# Basic Configuration
+[DEFAULT]
+bantime = 30d
+findtime = 600
+maxretry = 3
+backend = systemd
+logtimezone = UTC
+mta = sendmail
+action = %(action_mw)s
+
+# Whitelisted IPs - never ban these
+# 81.129.151.215 = admin IP
+# 178.62.75.145 188.166.137.38 2a03:b0c0:1:e0:0:1:b4e7:8001 = this server's own addresses
+#   (self-tests over the public IPv6 got the box banned during the 2026-09-05 OWASP scan)
+# updown.io monitoring nodes (resolve ips.updown.io for updates)
+ignoreip = 127.0.0.1/8 ::1 81.129.151.215 81.103.25.79
+            178.62.75.145 188.166.137.38 2a03:b0c0:1:e0:0:1:b4e7:8001
+            45.32.74.41 104.238.136.194 192.99.37.47
+            91.121.222.175 104.238.159.87 102.212.60.78
+            135.181.102.135 45.32.107.181 45.76.104.117
+            45.63.29.207 178.63.21.176
+
+[ssh]
+# Disabled - duplicate of sshd jail which uses systemd backend
+enabled = false
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 2
+
+[sshd]
+enabled = true
+maxretry = 2
+
+[app404]
+enabled = true
+backend = auto
+filter   = app404
+port = http,https
+logpath = /var/log/apache2/access.log
+findtime = 1d
+maxRetry = 3
+
+[apache-noscript]
+enabled = true
+backend = auto
+port = http,https 
+filter = apache-noscript 
+logpath = /var/log/apache2/error.log
+maxretry = 3
+
+# [apache-block-scan-bots] - REMOVED: patterns merged into apache-custom
+
+[apache-custom]
+enabled  = true
+backend = auto
+logpath  = /var/log/apache2/access.log
+findtime = 86400
+maxretry = 1
+
+[php-url-fopen]
+enabled = true
+backend = auto
+port = http,https
+filter = php-url-fopen
+logpath = /var/log/apache2/access.log
+maxretry = 1
+findtime = 1d
+
+[connect]
+enabled = true
+backend = auto
+port = http,https
+filter = connect
+logpath = /var/log/apache2/access.log
+maxretry = 1
+findtime = 1d
+action = %(action_mw)s
+
+# [geo-block] - REMOVED: geo-blocking handled by PHP check_allowed_ip.php
+
+[shellprobe]
+# Instant ban for shell/RCE probes (cgi-bin, path traversal, command injection)
+enabled = true
+backend = auto
+port = http,https
+filter = shellprobe
+logpath = /var/log/apache2/access.log
+maxretry = 1
+findtime = 1d
+
+[recidive]
+# Ban repeat offenders across all jails for 1 year
+enabled = true
+backend = auto
+logpath = /var/log/fail2ban.log
+banaction = %(banaction_allports)s
+bantime = 1y
+findtime = 30d
+maxretry = 3
+
+[apache-auth]
+# Ban HTTP authentication brute force attempts
+enabled = true
+backend = auto
+port = http,https
+filter = apache-auth
+logpath = /var/log/apache2/error.log
+maxretry = 3
+
+
+[hc-contact]
+enabled  = true
+backend  = auto
+filter   = hc-contact
+port     = http,https
+logpath  = /var/log/apache2/highlyconfidential.co.uk-access.log
+           /var/log/apache2/robertpowell.net-access.log
+           /var/log/apache2/rpowell.co.uk-access.log
+           /var/log/apache2/ultrasecret.net-access.log
+           /var/log/apache2/new.robertpowell.com-access.log
+findtime = 1h
+maxretry = 8
+bantime  = 1d
+
+# Blog admin password guessing (2026-09-05 OWASP review): the app has no lockout.
+# A wrong password answers 200, a right one 302.
+[blog-login]
+enabled  = true
+backend  = auto
+filter   = blog-login
+port     = http,https
+logpath  = /var/log/apache2/new.robertpowell.com-access.log
+findtime = 10m
+maxretry = 5
+bantime  = 1h

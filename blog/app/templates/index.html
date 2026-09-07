@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">{{ heading or tagline }}</h1>
+{% if not posts %}
+  <p class="empty">Nothing published yet.</p>
+{% endif %}
+<ul class="posts">
+{% for p in posts %}
+  <li>
+    <a class="p-title" href="{{ url_for('post', slug=p['slug']) }}">{{ p['title'] or 'Untitled' }}</a>
+    <time datetime="{{ p['published_at'] }}">{{ p['published_at']|pretty_date }}</time>
+  </li>
+{% endfor %}
+</ul>
+{% if page > 1 or more %}
+<nav class="pager">
+  {% if page > 1 %}<a href="{{ url_for('index', page=page-1) }}">&larr; Newer</a>{% endif %}
+  {% if more %}<a class="r" href="{{ url_for('index', page=page+1) }}">Older &rarr;</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

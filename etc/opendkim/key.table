@@ -1,0 +1,5 @@
+box2026._domainkey.robertpowell.net          robertpowell.net:box2026:/etc/opendkim/keys/robertpowell.net/box2026.private
+box2026._domainkey.robertpowell.com          robertpowell.com:box2026:/etc/opendkim/keys/robertpowell.com/box2026.private
+box2026._domainkey.rpowell.co.uk             rpowell.co.uk:box2026:/etc/opendkim/keys/rpowell.co.uk/box2026.private
+box2026._domainkey.ultrasecret.net           ultrasecret.net:box2026:/etc/opendkim/keys/ultrasecret.net/box2026.private
+box2026._domainkey.highlyconfidential.co.uk  highlyconfidential.co.uk:box2026:/etc/opendkim/keys/highlyconfidential.co.uk/box2026.private

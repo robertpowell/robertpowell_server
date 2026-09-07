@@ -1,0 +1,15 @@
+# Contact form submissions and QR address logs (2026-09-05 review, item T15).
+# The privacy policies promise a retention limit, so rotate yearly and keep seven years.
+# copytruncate: the PHP appenders hold no handle, but truncation keeps them oblivious either way.
+/var/www/highlyconfidential.co.uk/data/*.jsonl
+/var/www/shared/contact/data/*/*.jsonl {
+    yearly
+    rotate 7
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    create 0600 www-data www-data
+    su www-data www-data
+}

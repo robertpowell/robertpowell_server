@@ -1,0 +1,2 @@
+# Daily visitor report email at 9am
+0 9 * * * root /usr/local/bin/visitor-report.php >> /var/log/visitor-report.log 2>&1

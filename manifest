@@ -1,0 +1,30 @@
+# Maps repository paths to live paths on the box. One entry per line:
+#   repo_path | live_path | owner:group | dir_mode | file_mode | rsync excludes (comma separated, optional)
+# Used by pull-live.sh (live -> repo) and deploy.sh (repo -> live). Lines starting with # are ignored.
+# Secrets and data never appear here: they are excluded below and ignored by git; restic backs them up.
+
+sites/robertpowell.net            | /var/www/html                                  | root:root          | 755 | 644 | cache/,CLAUDE.md
+sites/highlyconfidential.co.uk    | /var/www/highlyconfidential.co.uk              | root:root          | 755 | 644 | data/
+sites/highlyconfidential.co.uk/lib| /var/www/highlyconfidential.co.uk/lib          | root:www-data      | 750 | 640 |
+sites/rpowell.co.uk               | /var/www/rpowell.co.uk                         | root:root          | 755 | 644 |
+sites/ultrasecret.net             | /var/www/ultrasecret.net                       | root:root          | 755 | 644 |
+sites/new.robertpowell.com        | /var/www/new.robertpowell.com                  | www-data:www-data  | 755 | 644 |
+sites/mta-sts/highlyconfidential.co.uk | /var/www/mta-sts.highlyconfidential.co.uk | www-data:www-data  | 755 | 644 |
+sites/mta-sts/robertpowell.com    | /var/www/mta-sts.robertpowell.com              | www-data:www-data  | 755 | 644 |
+sites/mta-sts/robertpowell.net    | /var/www/mta-sts.robertpowell.net              | www-data:www-data  | 755 | 644 |
+sites/mta-sts/rpowell.co.uk       | /var/www/mta-sts.rpowell.co.uk                 | www-data:www-data  | 755 | 644 |
+sites/mta-sts/ultrasecret.net     | /var/www/mta-sts.ultrasecret.net               | www-data:www-data  | 755 | 644 |
+shared/contact                    | /var/www/shared/contact                        | root:www-data      | 750 | 640 | data/
+shared/qr                         | /var/www/shared/qr                             | root:www-data      | 750 | 640 | vendor/
+blog/app                          | /opt/ropo-blog/app                             | root:root          | 755 | 644 | __pycache__/
+bin                               | /usr/local/bin                                 | root:root          | 755 | 755 | composer,__pycache__/
+sbin                              | /usr/local/sbin                                | root:root          | 755 | 700 |
+etc/apache2/sites-available       | /etc/apache2/sites-available                   | root:root          | 755 | 644 | 000-default*,default-ssl*
+etc/apache2/conf-available        | /etc/apache2/conf-available                    | root:root          | 755 | 644 | only:no-gzip-contact.conf,security-no-indexes.conf
+etc/fail2ban                      | /etc/fail2ban                                  | root:root          | 755 | 644 | only:jail.local,jail.d/,jail.d/blog.local,filter.d/,filter.d/200visits.conf,filter.d/apache-block-scan-bots.conf,filter.d/apache-custom.conf,filter.d/apache-unavaulable.conf,filter.d/app404.conf,filter.d/blog-login.conf,filter.d/connect.conf,filter.d/geo-block.conf,filter.d/hc-contact.conf,filter.d/shellprobe.conf
+etc/cron.d                        | /etc/cron.d                                    | root:root          | 755 | 644 | .placeholder,certbot,e2scrub_all,php,popularity-contest,sysstat
+etc/logrotate.d                   | /etc/logrotate.d                               | root:root          | 755 | 644 | only:contact-data
+etc/restic                        | /etc/restic                                    | root:root          | 755 | 644 |
+etc/postfix                       | /etc/postfix                                   | root:root          | 755 | 644 | *.db,*.proto,dynamicmaps*,makedefs.out,post-install,postfix-files*,postfix-script,sasl/
+etc/opendkim                      | /etc/opendkim                                  | root:root          | 755 | 644 | keys/
+etc/systemd/system                | /etc/systemd/system                            | root:root          | 755 | 644 | only:ropo-blog.service

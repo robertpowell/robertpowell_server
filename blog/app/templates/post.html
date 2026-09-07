@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ post['title'] or 'Untitled' }} — {{ site }}{% endblock %}
+{% block content %}
+<article class="entry">
+  <header>
+    {% if post['status'] != 'published' %}<p class="badge">Draft</p>{% endif %}
+    <h1>{{ post['title'] or 'Untitled' }}</h1>
+    <time datetime="{{ post['published_at'] }}">{{ post['published_at']|pretty_date }}</time>
+  </header>
+  <div class="body">{{ html|safe }}</div>
+  {% if tags %}
+  <p class="tags">{% for t in tags %}<a href="{{ url_for('tag', name=t) }}">{{ t }}</a>{% endfor %}</p>
+  {% endif %}
+  {% if is_admin %}<p class="editlink"><a href="{{ url_for('edit', post_id=post['id']) }}">Edit this post</a></p>{% endif %}
+</article>
+{% endblock %}

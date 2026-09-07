@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RoPo — the stack, in colour</title>
+<style>
+:root{--ground:#fbfaf8;--surface:#fff;--ink:#1b1a18;--muted:#5d5a55;--faint:#8d8880;
+--rule:#e4e0d9;--rule2:#cfc9bf;--accent:#8a4b2a;
+--fb:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","Noto Sans",Arial,sans-serif;
+--fm:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+@media(prefers-color-scheme:dark){:root{--ground:#14130f;--surface:#1c1a16;--ink:#ece7de;
+--muted:#a7a196;--faint:#79736a;--rule:#2c2822;--rule2:#413b33;--accent:#d98f62}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--fb);font-size:16px;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:clamp(1.1rem,4vw,2.6rem);display:flex;flex-direction:column;gap:2rem}
+.eyebrow{font-family:var(--fm);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(1.8rem,5vw,2.5rem);font-weight:650;letter-spacing:-.025em;line-height:1.07;margin:.4rem 0 0}
+.sf{color:var(--muted);max-width:62ch;margin:.55rem 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.1rem}
+.card{border:1px solid var(--rule);background:var(--surface);display:flex;flex-direction:column}
+.hd{padding:.95rem 1.1rem;border-bottom:1px solid var(--rule)}
+.hd h2{font-size:.98rem;font-weight:650;letter-spacing:-.017em;margin:0;display:flex;align-items:baseline;gap:.5rem}
+.hd h2 .n{font-family:var(--fm);font-size:.64rem;color:var(--faint);letter-spacing:.06em}
+.hd p{margin:.32rem 0 0;color:var(--muted);font-size:.85rem;line-height:1.5}
+.hex{display:flex;flex-wrap:wrap;gap:.45rem;font-family:var(--fm);font-size:.63rem;color:var(--faint);margin-top:.55rem!important}
+.hex span{display:flex;align-items:center;gap:.28rem}
+.hex i{width:10px;height:10px;border-radius:2px;border:1px solid var(--rule2);display:inline-block}
+.stage{padding:1.9rem 1rem;display:flex;justify-content:center;background:var(--ground);border-bottom:1px solid var(--rule)}
+.sizes{display:flex;align-items:flex-end;justify-content:center;gap:1.5rem;padding:1rem;border-bottom:1px solid var(--rule)}
+.sz{display:flex;flex-direction:column;align-items:center;gap:.35rem}
+.sz span{font-family:var(--fm);font-size:.58rem;color:var(--faint)}
+.mock{padding:.8rem 1.1rem;display:flex;justify-content:space-between;align-items:center;gap:.8rem}
+.brand{display:flex;align-items:center;gap:.5rem}
+.brand b{font-weight:650;letter-spacing:-.017em;font-size:.9rem}
+nav{display:flex;gap:.8rem;font-family:var(--fm);font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+svg{display:block}
+footer{border-top:1px solid var(--rule);padding-top:1rem;font-family:var(--fm);font-size:.7rem;color:var(--faint);line-height:1.7;max-width:62ch}
+</style></head><body>
+<div class="wrap">
+<header>
+<div class="eyebrow">The stack &middot; eight colourways</div>
+<h1>Same mark, better colour</h1>
+<p class="sf">The geometry is fixed now &mdash; Ro over Po, shared stem, the two o&rsquo;s stacked on the right.
+What changes here is colour. Several are <strong>two-tone</strong>, using the o&rsquo;s as the accent so the
+mark has some life in it rather than one flat fill. Each is shown large, at 44/28/16&nbsp;px, and in the header.</p>
+</header>
+<div class="grid">
+<div class="card">
+<div class="hd">
+  <h2><span class="n">01</span> Current</h2>
+  <p>What is there now — one flat brown, everything knocked out in cream.</p>
+  <p class="hex"><span><i style="background:#8a4b2a"></i>#8a4b2a</span>
+     <span><i style="background:#fbfaf8"></i>#fbfaf8</span>
+     <span><i style="background:#fbfaf8"></i>#fbfaf8</span></p>
+</div>
+<div class="stage"><svg width="132" height="132" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#8a4b2a"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fbfaf8"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fbfaf8"/>
+<circle cx="70" cy="35" r="11" stroke="#fbfaf8"/>
+<circle cx="70" cy="73" r="11" stroke="#fbfaf8"/>
+</g></svg></div>
+<div class="sizes">
+  <div class="sz"><svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#8a4b2a"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fbfaf8"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fbfaf8"/>
+<circle cx="70" cy="35" r="11" stroke="#fbfaf8"/>
+<circle cx="70" cy="73" r="11" stroke="#fbfaf8"/>
+</g></svg><span>44</span></div>
+  <div class="sz"><svg width="28" height="28" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#8a4b2a"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fbfaf8"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fbfaf8"/>
+<circle cx="70" cy="35" r="11" stroke="#fbfaf8"/>
+<circle cx="70" cy="73" r="11" stroke="#fbfaf8"/>
+</g></svg><span>28</span></div>
+  <div class="sz"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="20" fill="#8a4b2a"/>
+<g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fbfaf8"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fbfaf8"/>
+<circle cx="70" cy="35" r="11" stroke="#fbfaf8"/>
+<circle cx="70" cy="73" r="11" stroke="#fbfaf8"/>
+</g></svg><span>16</span></div>
+</div>
+<div class="mock">
+  <span class="brand"><svg width="25" height="25" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#8a4b2a"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fbfaf8"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fbfaf8"/>
+<circle cx="70" cy="35" r="11" stroke="#fbfaf8"/>
+<circle cx="70" cy="73" r="11" stroke="#fbfaf8"/>
+</g></svg><b>RobertPowell.com</b></span>
+  <nav><span>Archive</span><span>Feed</span></nav>
+</div>
+</div><div class="card">
+<div class="hd">
+  <h2><span class="n">02</span> Ink &amp; ember</h2>
+  <p>The site&#x27;s own ink as the ground, with the two o&#x27;s picked out in a warmer ember. Highest contrast of the set.</p>
+  <p class="hex"><span><i style="background:#1b1a18"></i>#1b1a18</span>
+     <span><i style="background:#f7f3ee"></i>#f7f3ee</span>
+     <span><i style="background:#e0793c"></i>#e0793c</span></p>
+</div>
+<div class="stage"><svg width="132" height="132" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#1b1a18"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f7f3ee"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f7f3ee"/>
+<circle cx="70" cy="35" r="11" stroke="#e0793c"/>
+<circle cx="70" cy="73" r="11" stroke="#e0793c"/>
+</g></svg></div>
+<div class="sizes">
+  <div class="sz"><svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#1b1a18"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f7f3ee"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f7f3ee"/>
+<circle cx="70" cy="35" r="11" stroke="#e0793c"/>
+<circle cx="70" cy="73" r="11" stroke="#e0793c"/>
+</g></svg><span>44</span></div>
+  <div class="sz"><svg width="28" height="28" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#1b1a18"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f7f3ee"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f7f3ee"/>
+<circle cx="70" cy="35" r="11" stroke="#e0793c"/>
+<circle cx="70" cy="73" r="11" stroke="#e0793c"/>
+</g></svg><span>28</span></div>
+  <div class="sz"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="20" fill="#1b1a18"/>
+<g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f7f3ee"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f7f3ee"/>
+<circle cx="70" cy="35" r="11" stroke="#e0793c"/>
+<circle cx="70" cy="73" r="11" stroke="#e0793c"/>
+</g></svg><span>16</span></div>
+</div>
+<div class="mock">
+  <span class="brand"><svg width="25" height="25" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#1b1a18"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f7f3ee"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f7f3ee"/>
+<circle cx="70" cy="35" r="11" stroke="#e0793c"/>
+<circle cx="70" cy="73" r="11" stroke="#e0793c"/>
+</g></svg><b>RobertPowell.com</b></span>
+  <nav><span>Archive</span><span>Feed</span></nav>
+</div>
+</div><div class="card">
+<div class="hd">
+  <h2><span class="n">03</span> Burnt rust</h2>
+  <p>A hotter, more saturated version of the current brown. The o&#x27;s step down a tint rather than changing hue.</p>
+  <p class="hex"><span><i style="background:#a33d16"></i>#a33d16</span>
+     <span><i style="background:#fff4ea"></i>#fff4ea</span>
+     <span><i style="background:#ffc9a0"></i>#ffc9a0</span></p>
+</div>
+<div class="stage"><svg width="132" height="132" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#a33d16"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fff4ea"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fff4ea"/>
+<circle cx="70" cy="35" r="11" stroke="#ffc9a0"/>
+<circle cx="70" cy="73" r="11" stroke="#ffc9a0"/>
+</g></svg></div>
+<div class="sizes">
+  <div class="sz"><svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#a33d16"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fff4ea"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fff4ea"/>
+<circle cx="70" cy="35" r="11" stroke="#ffc9a0"/>
+<circle cx="70" cy="73" r="11" stroke="#ffc9a0"/>
+</g></svg><span>44</span></div>
+  <div class="sz"><svg width="28" height="28" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#a33d16"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fff4ea"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fff4ea"/>
+<circle cx="70" cy="35" r="11" stroke="#ffc9a0"/>
+<circle cx="70" cy="73" r="11" stroke="#ffc9a0"/>
+</g></svg><span>28</span></div>
+  <div class="sz"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="20" fill="#a33d16"/>
+<g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fff4ea"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fff4ea"/>
+<circle cx="70" cy="35" r="11" stroke="#ffc9a0"/>
+<circle cx="70" cy="73" r="11" stroke="#ffc9a0"/>
+</g></svg><span>16</span></div>
+</div>
+<div class="mock">
+  <span class="brand"><svg width="25" height="25" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#a33d16"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#fff4ea"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#fff4ea"/>
+<circle cx="70" cy="35" r="11" stroke="#ffc9a0"/>
+<circle cx="70" cy="73" r="11" stroke="#ffc9a0"/>
+</g></svg><b>RobertPowell.com</b></span>
+  <nav><span>Archive</span><span>Feed</span></nav>
+</div>
+</div><div class="card">
+<div class="hd">
+  <h2><span class="n">04</span> Oxblood</h2>
+  <p>Deep red-brown with a warm sand for the o&#x27;s. Reads as older and quieter.</p>
+  <p class="hex"><span><i style="background:#5f2233"></i>#5f2233</span>
+     <span><i style="background:#f8eef0"></i>#f8eef0</span>
+     <span><i style="background:#dd9a6a"></i>#dd9a6a</span></p>
+</div>
+<div class="stage"><svg width="132" height="132" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#5f2233"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f8eef0"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f8eef0"/>
+<circle cx="70" cy="35" r="11" stroke="#dd9a6a"/>
+<circle cx="70" cy="73" r="11" stroke="#dd9a6a"/>
+</g></svg></div>
+<div class="sizes">
+  <div class="sz"><svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#5f2233"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f8eef0"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f8eef0"/>
+<circle cx="70" cy="35" r="11" stroke="#dd9a6a"/>
+<circle cx="70" cy="73" r="11" stroke="#dd9a6a"/>
+</g></svg><span>44</span></div>
+  <div class="sz"><svg width="28" height="28" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#5f2233"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f8eef0"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f8eef0"/>
+<circle cx="70" cy="35" r="11" stroke="#dd9a6a"/>
+<circle cx="70" cy="73" r="11" stroke="#dd9a6a"/>
+</g></svg><span>28</span></div>
+  <div class="sz"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="20" fill="#5f2233"/>
+<g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f8eef0"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f8eef0"/>
+<circle cx="70" cy="35" r="11" stroke="#dd9a6a"/>
+<circle cx="70" cy="73" r="11" stroke="#dd9a6a"/>
+</g></svg><span>16</span></div>
+</div>
+<div class="mock">
+  <span class="brand"><svg width="25" height="25" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#5f2233"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f8eef0"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f8eef0"/>
+<circle cx="70" cy="35" r="11" stroke="#dd9a6a"/>
+<circle cx="70" cy="73" r="11" stroke="#dd9a6a"/>
+</g></svg><b>RobertPowell.com</b></span>
+  <nav><span>Archive</span><span>Feed</span></nav>
+</div>
+</div><div class="card">
+<div class="hd">
+  <h2><span class="n">05</span> Bottle green</h2>
+  <p>Dark green with an old-gold o. The only cool ground here, and it makes the accent do more work.</p>
+  <p class="hex"><span><i style="background:#1f4438"></i>#1f4438</span>
+     <span><i style="background:#f0f6f2"></i>#f0f6f2</span>
+     <span><i style="background:#d8a53a"></i>#d8a53a</span></p>
+</div>
+<div class="stage"><svg width="132" height="132" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#1f4438"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f0f6f2"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f0f6f2"/>
+<circle cx="70" cy="35" r="11" stroke="#d8a53a"/>
+<circle cx="70" cy="73" r="11" stroke="#d8a53a"/>
+</g></svg></div>
+<div class="sizes">
+  <div class="sz"><svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#1f4438"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f0f6f2"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f0f6f2"/>
+<circle cx="70" cy="35" r="11" stroke="#d8a53a"/>
+<circle cx="70" cy="73" r="11" stroke="#d8a53a"/>
+</g></svg><span>44</span></div>
+  <div class="sz"><svg width="28" height="28" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#1f4438"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f0f6f2"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f0f6f2"/>
+<circle cx="70" cy="35" r="11" stroke="#d8a53a"/>
+<circle cx="70" cy="73" r="11" stroke="#d8a53a"/>
+</g></svg><span>28</span></div>
+  <div class="sz"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="20" fill="#1f4438"/>
+<g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f0f6f2"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f0f6f2"/>
+<circle cx="70" cy="35" r="11" stroke="#d8a53a"/>
+<circle cx="70" cy="73" r="11" stroke="#d8a53a"/>
+</g></svg><span>16</span></div>
+</div>
+<div class="mock">
+  <span class="brand"><svg width="25" height="25" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#1f4438"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f0f6f2"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f0f6f2"/>
+<circle cx="70" cy="35" r="11" stroke="#d8a53a"/>
+<circle cx="70" cy="73" r="11" stroke="#d8a53a"/>
+</g></svg><b>RobertPowell.com</b></span>
+  <nav><span>Archive</span><span>Feed</span></nav>
+</div>
+</div><div class="card">
+<div class="hd">
+  <h2><span class="n">06</span> Slate &amp; clay</h2>
+  <p>Neutral slate so the clay o&#x27;s carry all the colour. The most modern of the set.</p>
+  <p class="hex"><span><i style="background:#2f343a"></i>#2f343a</span>
+     <span><i style="background:#f4f1ed"></i>#f4f1ed</span>
+     <span><i style="background:#d2703f"></i>#d2703f</span></p>
+</div>
+<div class="stage"><svg width="132" height="132" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#2f343a"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f4f1ed"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f4f1ed"/>
+<circle cx="70" cy="35" r="11" stroke="#d2703f"/>
+<circle cx="70" cy="73" r="11" stroke="#d2703f"/>
+</g></svg></div>
+<div class="sizes">
+  <div class="sz"><svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#2f343a"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f4f1ed"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f4f1ed"/>
+<circle cx="70" cy="35" r="11" stroke="#d2703f"/>
+<circle cx="70" cy="73" r="11" stroke="#d2703f"/>
+</g></svg><span>44</span></div>
+  <div class="sz"><svg width="28" height="28" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#2f343a"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f4f1ed"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f4f1ed"/>
+<circle cx="70" cy="35" r="11" stroke="#d2703f"/>
+<circle cx="70" cy="73" r="11" stroke="#d2703f"/>
+</g></svg><span>28</span></div>
+  <div class="sz"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="20" fill="#2f343a"/>
+<g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f4f1ed"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f4f1ed"/>
+<circle cx="70" cy="35" r="11" stroke="#d2703f"/>
+<circle cx="70" cy="73" r="11" stroke="#d2703f"/>
+</g></svg><span>16</span></div>
+</div>
+<div class="mock">
+  <span class="brand"><svg width="25" height="25" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#2f343a"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#f4f1ed"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#f4f1ed"/>
+<circle cx="70" cy="35" r="11" stroke="#d2703f"/>
+<circle cx="70" cy="73" r="11" stroke="#d2703f"/>
+</g></svg><b>RobertPowell.com</b></span>
+  <nav><span>Archive</span><span>Feed</span></nav>
+</div>
+</div><div class="card">
+<div class="hd">
+  <h2><span class="n">07</span> Sand inverted</h2>
+  <p>Flipped: a light tile with the marks in brown. Sits quietly on the cream page instead of punching out of it.</p>
+  <p class="hex"><span><i style="background:#efe4d6"></i>#efe4d6</span>
+     <span><i style="background:#7a3a18"></i>#7a3a18</span>
+     <span><i style="background:#a8551f"></i>#a8551f</span></p>
+</div>
+<div class="stage"><svg width="132" height="132" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#efe4d6"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#7a3a18"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#7a3a18"/>
+<circle cx="70" cy="35" r="11" stroke="#a8551f"/>
+<circle cx="70" cy="73" r="11" stroke="#a8551f"/>
+</g></svg></div>
+<div class="sizes">
+  <div class="sz"><svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#efe4d6"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#7a3a18"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#7a3a18"/>
+<circle cx="70" cy="35" r="11" stroke="#a8551f"/>
+<circle cx="70" cy="73" r="11" stroke="#a8551f"/>
+</g></svg><span>44</span></div>
+  <div class="sz"><svg width="28" height="28" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#efe4d6"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#7a3a18"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#7a3a18"/>
+<circle cx="70" cy="35" r="11" stroke="#a8551f"/>
+<circle cx="70" cy="73" r="11" stroke="#a8551f"/>
+</g></svg><span>28</span></div>
+  <div class="sz"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="20" fill="#efe4d6"/>
+<g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#7a3a18"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#7a3a18"/>
+<circle cx="70" cy="35" r="11" stroke="#a8551f"/>
+<circle cx="70" cy="73" r="11" stroke="#a8551f"/>
+</g></svg><span>16</span></div>
+</div>
+<div class="mock">
+  <span class="brand"><svg width="25" height="25" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#efe4d6"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#7a3a18"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#7a3a18"/>
+<circle cx="70" cy="35" r="11" stroke="#a8551f"/>
+<circle cx="70" cy="73" r="11" stroke="#a8551f"/>
+</g></svg><b>RobertPowell.com</b></span>
+  <nav><span>Archive</span><span>Feed</span></nav>
+</div>
+</div><div class="card">
+<div class="hd">
+  <h2><span class="n">08</span> Indigo &amp; apricot</h2>
+  <p>Cool navy against a warm apricot. The widest temperature gap, and the most contemporary.</p>
+  <p class="hex"><span><i style="background:#26304d"></i>#26304d</span>
+     <span><i style="background:#eef1f7"></i>#eef1f7</span>
+     <span><i style="background:#f0a55e"></i>#f0a55e</span></p>
+</div>
+<div class="stage"><svg width="132" height="132" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#26304d"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#eef1f7"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#eef1f7"/>
+<circle cx="70" cy="35" r="11" stroke="#f0a55e"/>
+<circle cx="70" cy="73" r="11" stroke="#f0a55e"/>
+</g></svg></div>
+<div class="sizes">
+  <div class="sz"><svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#26304d"/>
+<g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#eef1f7"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#eef1f7"/>
+<circle cx="70" cy="35" r="11" stroke="#f0a55e"/>
+<circle cx="70" cy="73" r="11" stroke="#f0a55e"/>
+</g></svg><span>44</span></div>
+  <div class="sz"><svg width="28" height="28" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#26304d"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#eef1f7"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#eef1f7"/>
+<circle cx="70" cy="35" r="11" stroke="#f0a55e"/>
+<circle cx="70" cy="73" r="11" stroke="#f0a55e"/>
+</g></svg><span>28</span></div>
+  <div class="sz"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="20" fill="#26304d"/>
+<g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#eef1f7"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#eef1f7"/>
+<circle cx="70" cy="35" r="11" stroke="#f0a55e"/>
+<circle cx="70" cy="73" r="11" stroke="#f0a55e"/>
+</g></svg><span>16</span></div>
+</div>
+<div class="mock">
+  <span class="brand"><svg width="25" height="25" viewBox="0 0 100 100" role="img" aria-label="RoPo mark">
+<rect x="2" y="2" width="96" height="96" rx="18" fill="#26304d"/>
+<g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" stroke="#eef1f7"/>
+<path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" stroke="#eef1f7"/>
+<circle cx="70" cy="35" r="11" stroke="#f0a55e"/>
+<circle cx="70" cy="73" r="11" stroke="#f0a55e"/>
+</g></svg><b>RobertPowell.com</b></span>
+  <nav><span>Archive</span><span>Feed</span></nav>
+</div>
+</div>
+</div>
+<footer>
+Every version is plain SVG with no font dependency. Tell me a number &mdash; or a hex pair &mdash; and I will
+wire it into the header and regenerate the favicon to match.
+</footer>
+</div>
+</body></html>

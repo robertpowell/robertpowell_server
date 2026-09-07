@@ -1,0 +1,80 @@
+/* ==========================================================================
+   Author's custom styles
+   ========================================================================== */
+
+@font-face {
+	font-family: "Montserrat";
+	src: url("../fonts/Montserrat-VariableFont_wght.ttf");
+}
+
+
+h1 {
+    /* font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif; */
+    font-family: "Montserrat", sans-serif;
+}
+
+h2,
+h3,
+body,
+p {
+    /* font-family: Verdana, Geneva, sans-serif; */
+    font-family: "Montserrat", sans-serif;
+}
+
+.logo h1 {
+    color: white;
+    background-color: #fa4a04;
+    border-radius: 10px;
+}
+
+
+
+.sublogo {
+    font-size: 4vw;
+}
+
+.addr {
+    font-size: 2vw;
+}
+
+.logosmall h1 {
+    color: white;
+    background-color: #fa4a04;
+    border-radius: 5px;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #fa4a04;
+}
+
+.logosmall h1:hover {
+    color: #fa4a04;
+    background-color: white;
+    border-radius: 10px;
+}
+
+body {
+    padding-bottom: 20px;
+    font-size: 16px;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    padding-bottom: 15px;
+}
+
+.logopic {
+    width: 100%;
+    padding: 0px;
+}
+
+
+.mid {
+    background-color: #eaecef;
+    padding-bottom: 0px;
+}
+
+.smimage {
+    margin: 0 auto;
+    width: 25%;
+}

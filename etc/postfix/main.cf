@@ -1,0 +1,48 @@
+# Postfix on the Apache box (178.62.75.145) — send-only MTA for the five domains.
+# Written 2026-09-03. Receiving stays at Fastmail; nothing listens on the public interface.
+compatibility_level = 3.6
+myhostname = robertpowell.net
+myorigin = /etc/mailname
+mydestination = localhost
+mynetworks = 127.0.0.0/8 [::1]/128
+inet_interfaces = loopback-only
+inet_protocols = ipv4
+# IPv6 is enabled on the box but DigitalOcean blocks outbound port 25 over IPv6 (confirmed 2026-09-03:
+# connections to Gmail [2a00:1450:...]:25 time out while v6 ping/https work). Keep ipv4 unless that changes.
+# Original note: switch to `all` + smtp_bind_address6 once every
+# domain's SPF carries ip6:2a03:b0c0:1:e0:0:1:b4e7:8000/124.
+# smtp_bind_address6 = 2a03:b0c0:1:e0:0:1:b4e7:8001
+smtp_address_preference = ipv4
+relayhost =
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+# Do NOT rewrite sender domains (DMARC strict alignment on all five domains).
+# Only local system accounts get mapped to real mailboxes.
+sender_canonical_maps = hash:/etc/postfix/sender_canonical
+# Envelope senders must belong to one of our domains (applies to SMTP submissions on loopback).
+smtpd_sender_restrictions = check_sender_access hash:/etc/postfix/sender_domains, reject
+smtpd_recipient_restrictions = permit_mynetworks, reject
+smtpd_relay_restrictions = permit_mynetworks, reject
+smtpd_helo_required = yes
+disable_vrfy_command = yes
+message_size_limit = 26214400
+mailbox_size_limit = 0
+recipient_delimiter = +
+# Outbound TLS: opportunistic, log the cipher.
+smtp_tls_security_level = may
+smtp_tls_loglevel = 1
+smtp_tls_CApath = /etc/ssl/certs
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+# Inbound TLS on loopback only (self-signed snakeoil is fine here).
+smtpd_tls_security_level = may
+smtpd_tls_cert_file = /etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file = /etc/ssl/private/ssl-cert-snakeoil.key
+# DKIM signing via OpenDKIM milter (covers sendmail/pickup submissions too).
+milter_default_action = accept
+milter_protocol = 6
+smtpd_milters = unix:opendkim/opendkim.sock
+non_smtpd_milters = $smtpd_milters
+smtputf8_enable = no
+#smtp_bind_address6 = 2a03:b0c0:1:e0:0:1:b4e7:8001
+header_checks = 
+defer_transports = 

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Not found — {{ site }}{% endblock %}
+{% block content %}
+<h1 class="page-title">Not found</h1>
+<p class="empty">That page isn't here. Try the <a href="{{ url_for('archive') }}">archive</a>.</p>
+{% endblock %}

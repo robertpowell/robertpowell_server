@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Archive — {{ site }}{% endblock %}
+{% block content %}
+<h1 class="page-title">Archive</h1>
+<p class="years">{% for y in years %}<a href="#y{{ y['yr'] }}">{{ y['yr'] }} <span>{{ y['n'] }}</span></a>{% endfor %}</p>
+{% set ns = namespace(cur='') %}
+<ul class="posts arch">
+{% for p in posts %}
+  {% if p['published_at'][:4] != ns.cur %}
+    {% set ns.cur = p['published_at'][:4] %}
+    <li class="yr" id="y{{ ns.cur }}">{{ ns.cur }}</li>
+  {% endif %}
+  <li>
+    <a class="p-title" href="{{ url_for('post', slug=p['slug']) }}">{{ p['title'] or 'Untitled' }}</a>
+    <time datetime="{{ p['published_at'] }}">{{ p['published_at']|pretty_date }}</time>
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}

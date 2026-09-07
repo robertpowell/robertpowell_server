@@ -1,0 +1,27 @@
+/* Font Awesome uses the Unicode Private Use Area (PUA) to ensure screen
+readers do not read off random characters that represent icons */
+
+.#{$fa-css-prefix}-calendar-alt:before { content: fa-content($fa-var-calendar-alt); }
+.#{$fa-css-prefix}-car:before { content: fa-content($fa-var-car); }
+.#{$fa-css-prefix}-check:before { content: fa-content($fa-var-check); }
+.#{$fa-css-prefix}-check-square:before { content: fa-content($fa-var-check-square); }
+.#{$fa-css-prefix}-clock:before { content: fa-content($fa-var-clock); }
+.#{$fa-css-prefix}-door-open:before { content: fa-content($fa-var-door-open); }
+.#{$fa-css-prefix}-envelope:before { content: fa-content($fa-var-envelope); }
+.#{$fa-css-prefix}-envelope-open:before { content: fa-content($fa-var-envelope-open); }
+.#{$fa-css-prefix}-exclamation-triangle:before { content: fa-content($fa-var-exclamation-triangle); }
+.#{$fa-css-prefix}-home:before { content: fa-content($fa-var-home); }
+.#{$fa-css-prefix}-lock-alt:before { content: fa-content($fa-var-lock-alt); }
+.#{$fa-css-prefix}-map-marker-alt:before { content: fa-content($fa-var-map-marker-alt); }
+.#{$fa-css-prefix}-minus:before { content: fa-content($fa-var-minus); }
+.#{$fa-css-prefix}-moon:before { content: fa-content($fa-var-moon); }
+.#{$fa-css-prefix}-notes-medical:before { content: fa-content($fa-var-notes-medical); }
+.#{$fa-css-prefix}-parking:before { content: fa-content($fa-var-parking); }
+.#{$fa-css-prefix}-phone:before { content: fa-content($fa-var-phone); }
+.#{$fa-css-prefix}-plus:before { content: fa-content($fa-var-plus); }
+.#{$fa-css-prefix}-plus-circle:before { content: fa-content($fa-var-plus-circle); }
+.#{$fa-css-prefix}-question-circle:before { content: fa-content($fa-var-question-circle); }
+.#{$fa-css-prefix}-sun:before { content: fa-content($fa-var-sun); }
+.#{$fa-css-prefix}-times:before { content: fa-content($fa-var-times); }
+.#{$fa-css-prefix}-user:before { content: fa-content($fa-var-user); }
+.#{$fa-css-prefix}-users:before { content: fa-content($fa-var-users); }

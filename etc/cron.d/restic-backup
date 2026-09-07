@@ -1,0 +1,4 @@
+# Nightly restic backup to Backblaze B2. 03:30 UTC, well clear of the 08:15 visitor report.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+30 3 * * * root /usr/local/sbin/restic-backup.sh

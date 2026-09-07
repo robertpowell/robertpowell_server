@@ -1,0 +1,23 @@
+# The blog vhost writes to its own access log, so the jails that only watch
+# /var/log/apache2/access.log were not seeing it at all. Added here.
+#
+# DELIBERATELY EXCLUDED: app404. That jail bans on 3x HTTP 404 in a day for
+# 30 days. A blog 404s constantly and legitimately - unpublished drafts, old
+# permalinks, missing favicons - so pointing it at this log would ban real
+# readers. The jails below match attack signatures, not status codes.
+
+[apache-custom]
+logpath  = /var/log/apache2/access.log
+           /var/log/apache2/new.robertpowell.com-access.log
+
+[connect]
+logpath  = /var/log/apache2/access.log
+           /var/log/apache2/new.robertpowell.com-access.log
+
+[shellprobe]
+logpath  = /var/log/apache2/access.log
+           /var/log/apache2/new.robertpowell.com-access.log
+
+[php-url-fopen]
+logpath  = /var/log/apache2/access.log
+           /var/log/apache2/new.robertpowell.com-access.log

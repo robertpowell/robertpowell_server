@@ -1,0 +1,11 @@
+harvard-medical-school:
+  icons:
+    - notes-medical
+    - plus
+  label: Harvard Medical School
+  url: 'https://hms.harvard.edu'
+rocket-chat:
+  icons:
+    - phone
+  label: Rocket.Chat
+  url: 'https://rocket.chat'

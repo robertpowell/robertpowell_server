@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if post else 'New post' }} — {{ site }}{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ 'Edit post' if post else 'New post' }}</h1>
+<form method="post" class="form">
+  <label for="title">Title</label>
+  <input id="title" name="title" value="{{ post['title'] if post else '' }}" autocomplete="off">
+
+  <label for="body">Body <span class="dim">Markdown</span></label>
+  <textarea id="body" name="body" rows="20">{{ post['body'] if post else '' }}</textarea>
+
+  <div class="row">
+    <div>
+      <label for="published_at">Date</label>
+      <input id="published_at" name="published_at" class="mono"
+             value="{{ post['published_at'] if post and post['published_at'] else '' }}"
+             placeholder="YYYY-MM-DD HH:MM:SS">
+    </div>
+    <div>
+      <label for="slug">Slug</label>
+      <input id="slug" name="slug" class="mono" value="{{ post['slug'] if post else '' }}"
+             placeholder="auto from title">
+    </div>
+  </div>
+
+  <label for="tags">Tags <span class="dim">comma separated</span></label>
+  <input id="tags" name="tags" value="{{ tags }}">
+
+  <label class="check">
+    <input type="checkbox" name="status" value="published"
+           {% if post and post['status'] == 'published' %}checked{% endif %}>
+    Published
+  </label>
+
+  <div class="actions">
+    <button type="submit">Save</button>
+    <a class="cancel" href="{{ url_for('admin') }}">Cancel</a>
+    {% if post %}<a class="dim" href="{{ url_for('post', slug=post['slug']) }}">View</a>{% endif %}
+  </div>
+</form>
+{% if post %}
+<form method="post" action="{{ url_for('delete', post_id=post['id']) }}" class="danger"
+      data-confirm="Delete this post permanently?">
+  <button type="submit">Delete this post</button>
+</form>
+{% endif %}
+{% endblock %}

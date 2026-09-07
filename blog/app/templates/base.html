@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ site }}{% endblock %}</title>
+<link rel="alternate" type="application/rss+xml" title="{{ site }}" href="{{ url_for('feed') }}">
+<script src="{{ url_for('static', filename='theme.js') }}?v={{ static_v('theme.js') }}"></script>
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}?v={{ static_v('favicon.svg') }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ static_v('style.css') }}">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="bar">
+    <a class="wordmark" href="{{ url_for('index') }}">
+      <svg class="mk" viewBox="0 0 100 100" width="28" height="28" aria-hidden="true" focusable="false">
+        <rect x="2" y="2" width="96" height="96" rx="20" class="mk-tile"/>
+        <g fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 16 V46 M20 16 H33 A9 9 0 0 1 33 32 H20 M31 32 L41 46" class="mk-l"/>
+          <path d="M20 54 V84 M20 54 H33 A9 9 0 0 1 33 70 H20" class="mk-l"/>
+          <circle cx="70" cy="35" r="11" class="mk-o"/>
+          <circle cx="70" cy="73" r="11" class="mk-o"/>
+        </g>
+      </svg>
+      <span>{{ site }}</span>
+    </a>
+    <nav>
+      <a href="{{ url_for('archive') }}">Archive</a>
+      {% for pg in pages %}<a href="{{ url_for('page', slug=pg['slug']) }}">{{ pg['title'] }}</a>{% endfor %}
+      <a href="{{ url_for('feed') }}">Feed</a>
+      <a href="/contact.php">Contact</a>
+      <a href="/privacy.php">Privacy</a>
+      {% if is_admin %}<a href="{{ url_for('admin') }}">Admin</a>{% endif %}
+      <span class="ctl">
+        <span class="grp sz" role="group" aria-label="Text size">
+          <button type="button" data-size-step="-1" title="Smaller text" aria-label="Smaller text">&minus;</button>
+          <button type="button" data-size-reset title="Reset text size" aria-label="Reset text size">A</button>
+          <button type="button" data-size-step="1" title="Larger text" aria-label="Larger text">+</button>
+        </span>
+        <span class="sep" aria-hidden="true"></span>
+        <span class="grp th" role="group" aria-label="Colour theme">
+          <button type="button" data-theme-set="light"  title="Light">Light</button>
+          <button type="button" data-theme-set="system" title="Follow your device">Auto</button>
+          <button type="button" data-theme-set="dark"   title="Dark">Dark</button>
+        </span>
+      </span>
+    </nav>
+  </div>
+</header>
+{% with msgs = get_flashed_messages() %}
+  {% if msgs %}<div class="flash">{% for m in msgs %}<p>{{ m }}</p>{% endfor %}</div>{% endif %}
+{% endwith %}
+<main id="main">{% block content %}{% endblock %}</main>
+<footer class="foot">
+  <p>{{ tagline }}</p>
+  <p class="dim">&copy; Robert Powell {{ now.year }}</p>
+</footer>
+</body>
+</html>
