@@ -3,6 +3,8 @@
 Flask + SQLite. No ORM, no migrations framework; the schema is one file and the
 queries are short enough to read.
 """
+import io
+import secrets
 import os
 import re
 import sqlite3
@@ -14,6 +16,7 @@ import markdown as md
 from flask import (Flask, abort, flash, g, redirect, render_template, request,
                    session, url_for, Response)
 from werkzeug.security import check_password_hash
+from werkzeug.utils import secure_filename
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB = os.environ.get("BLOG_DB", os.path.join(BASE, "data", "blog.db"))
@@ -29,6 +32,10 @@ app.config.update(
     SESSION_COOKIE_SECURE=True,       # admin session cookie only over https
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",    # not sent on cross-site POSTs
+    MAX_CONTENT_LENGTH=40 * 1024 * 1024,   # whole upload request; per-file cap is UPLOAD_MAX_BYTES
+    MEDIA_DIR=os.environ.get("BLOG_MEDIA_DIR", os.path.join(os.path.dirname(DB), "media")),
+    UPLOAD_MAX_BYTES=20 * 1024 * 1024,
+    UPLOAD_MAX_WIDTH=1600,
 )
 
 
@@ -305,6 +312,115 @@ def edit(post_id=None):
 
     return render_template("edit.html", post=row,
                            tags=", ".join(tags_for(row["id"])) if row else "")
+
+
+# ---------------------------------------------------------------- image upload
+
+IMAGE_FORMATS = {"JPEG": ".jpg", "PNG": ".png", "GIF": ".gif", "WEBP": ".webp"}
+
+
+def _same_origin():
+    """CSRF guard for the JSON upload endpoint: the browser must say the request is same-origin."""
+    site = request.headers.get("Sec-Fetch-Site")
+    if site:
+        return site in ("same-origin", "none")
+    origin = request.headers.get("Origin") or request.headers.get("Referer") or ""
+    return origin.startswith(request.host_url.rstrip("/")) or origin.startswith(
+        app.config["SITE_URL"].rstrip("/"))
+
+
+def _exif_taken_at(img):
+    try:
+        exif = img.getexif()
+        raw = exif.get(36867) or exif.get(306)          # DateTimeOriginal, else DateTime
+        if raw:
+            return datetime.strptime(str(raw)[:19], "%Y:%m:%d %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+    except Exception:
+        pass
+    return None
+
+
+def save_image(storage, post_id=None):
+    """Validate, orient, resize, strip metadata, store under MEDIA_DIR/YYYY/MM. Returns a dict."""
+    from PIL import Image, ImageOps, UnidentifiedImageError
+    data = storage.read()
+    if not data:
+        raise ValueError("empty file")
+    if len(data) > app.config["UPLOAD_MAX_BYTES"]:
+        raise ValueError(f"{storage.filename or 'file'} is larger than "
+                         f"{app.config['UPLOAD_MAX_BYTES'] // (1024 * 1024)} MB")
+    try:
+        img = Image.open(io.BytesIO(data))
+        img.verify()
+        img = Image.open(io.BytesIO(data))
+    except (UnidentifiedImageError, OSError):
+        raise ValueError(f"{storage.filename or 'file'} is not a jpeg, png, gif or webp image")
+    fmt = img.format
+    if fmt not in IMAGE_FORMATS:
+        raise ValueError(f"{fmt or 'unknown'} images are not accepted")
+    taken = _exif_taken_at(img)
+    animated = getattr(img, "is_animated", False)
+    if not animated:
+        img = ImageOps.exif_transpose(img)
+        w = app.config["UPLOAD_MAX_WIDTH"]
+        if img.width > w:
+            img = img.resize((w, round(img.height * w / img.width)), Image.LANCZOS)
+
+    stem = slugify(os.path.splitext(storage.filename or "")[0], fallback="image")[:40]
+    now = datetime.now(timezone.utc)
+    rel_dir = now.strftime("%Y/%m")
+    out_dir = os.path.join(app.config["MEDIA_DIR"], rel_dir)
+    os.makedirs(out_dir, exist_ok=True)
+    ext = IMAGE_FORMATS[fmt]
+    name = f"{stem}-{secrets.token_hex(3)}{ext}"
+    while os.path.exists(os.path.join(out_dir, name)):
+        name = f"{stem}-{secrets.token_hex(3)}{ext}"
+    path = os.path.join(out_dir, name)
+
+    if animated:
+        with open(path, "wb") as f:                     # animated gif/webp: keep frames, no re-encode
+            f.write(data)
+    elif fmt == "JPEG":
+        img.convert("RGB").save(path, "JPEG", quality=85, optimize=True, progressive=True)
+    elif fmt == "PNG":
+        img.save(path, "PNG", optimize=True)            # save() without exif= drops metadata
+    elif fmt == "WEBP":
+        img.save(path, "WEBP", quality=85, method=4)
+    else:
+        img.save(path, "GIF")
+    os.chmod(path, 0o644)
+
+    rel = f"{rel_dir}/{name}"
+    conn = db()
+    conn.execute("INSERT INTO media (filename, post_id, taken_at) VALUES (?,?,?)",
+                 (rel, post_id, taken))
+    conn.commit()
+    return {"url": f"/media/{rel}", "name": name, "width": img.width, "height": img.height,
+            "bytes": os.path.getsize(path), "markdown": f"![]({'/media/' + rel})"}
+
+
+@app.route("/admin/upload", methods=["POST"])
+def upload():
+    if not session.get("admin"):
+        return {"error": "not signed in"}, 401
+    if not _same_origin():
+        return {"error": "cross-site request refused"}, 403
+    post_id = request.form.get("post_id", type=int)
+    files = [f for f in request.files.getlist("images") if f and f.filename]
+    if not files:
+        return {"error": "no files"}, 400
+    saved, errors = [], []
+    for f in files[:12]:
+        try:
+            saved.append(save_image(f, post_id))
+        except ValueError as e:
+            errors.append(str(e))
+    return {"saved": saved, "errors": errors}, (200 if saved else 422)
+
+
+@app.errorhandler(413)
+def too_large(e):
+    return {"error": "upload too large"}, 413
 
 
 @app.route("/admin/delete/<int:post_id>", methods=["POST"])

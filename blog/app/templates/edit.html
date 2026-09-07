@@ -7,7 +7,14 @@
   <input id="title" name="title" value="{{ post['title'] if post else '' }}" autocomplete="off">
 
   <label for="body">Body <span class="dim">Markdown</span></label>
-  <textarea id="body" name="body" rows="20">{{ post['body'] if post else '' }}</textarea>
+  <textarea id="body" name="body" rows="20" data-upload-url="{{ url_for('upload') }}"
+            data-post-id="{{ post['id'] if post else '' }}">{{ post['body'] if post else '' }}</textarea>
+  <div class="upl" id="upl">
+    <input type="file" id="upl-files" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden>
+    <button type="button" id="upl-btn">Add image</button>
+    <span class="dim">or drop pictures onto the text, or paste one. Resized to 1600&nbsp;px, location data removed.</span>
+    <span id="upl-status" class="upl-status" role="status" aria-live="polite"></span>
+  </div>
 
   <div class="row">
     <div>
@@ -44,4 +51,5 @@
   <button type="submit">Delete this post</button>
 </form>
 {% endif %}
+<script src="{{ url_for('static', filename='editor.js') }}?v={{ static_v('editor.js') }}" defer></script>
 {% endblock %}
