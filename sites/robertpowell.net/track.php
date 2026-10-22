@@ -39,7 +39,6 @@ $ip_ch = curl_init('http://ip-api.com/json/' . urlencode($remoteaddr) . '?fields
 curl_setopt($ip_ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ip_ch, CURLOPT_TIMEOUT, 3);
 $ipjson = curl_exec($ip_ch);
-curl_close($ip_ch);
 
 $ipapi_result = json_decode($ipjson, true);
 

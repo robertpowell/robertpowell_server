@@ -51,7 +51,7 @@ Making the box match the checkout (after a `git pull`, or on a fresh server):
 
 ## A fresh server
 
-1. Ubuntu 24.04 with `apache2 php8.4-fpm php8.4-mbstring python3-venv postfix opendkim fail2ban restic sqlite3 mysql-server`.
+1. Ubuntu 24.04 with `apache2 php8.5-fpm php8.5-mbstring php8.5-curl php8.5-gd php8.5-mysql python3-venv postfix opendkim fail2ban restic sqlite3 mysql-server`.
 2. Clone this repository to `/srv/rp-server`.
 3. Create the users `ropoblog` and the data directories listed above; put `blog.env` and the contact `secret` files in place.
 4. `python3 -m venv /opt/ropo-blog/venv && /opt/ropo-blog/venv/bin/pip install -r blog/requirements.txt`

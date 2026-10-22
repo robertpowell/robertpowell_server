@@ -7,7 +7,7 @@ out="Post-reboot check on $(hostname) at $(date -u '+%Y-%m-%d %H:%M:%S UTC')\n\n
 ok=0; bad=0
 line() { if [ "$2" = "ok" ]; then ok=$((ok+1)); else bad=$((bad+1)); fi; out+="$(printf '%-38s %s\n' "$1" "$2")\n"; }
 [ "$K" = "$WANT" ] && line "kernel $K" ok || line "kernel $K (wanted $WANT)" FAIL
-for s in apache2 php8.4-fpm ropo-blog postfix fail2ban mysql ufw; do
+for s in apache2 php8.5-fpm ropo-blog postfix fail2ban mysql ufw; do
   st=$(systemctl is-active "$s" 2>/dev/null); [ "$st" = "active" ] && line "service $s" ok || line "service $s" "FAIL ($st)"
 done
 mountpoint -q /mnt/ropo_volume && line "mount /mnt/ropo_volume" ok || line "mount /mnt/ropo_volume" FAIL
