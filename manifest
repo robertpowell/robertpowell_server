@@ -30,4 +30,4 @@ etc/opendkim                      | /etc/opendkim                               
 etc/systemd/system                | /etc/systemd/system                            | root:root          | 755 | 644 | only:ropo-blog.service,ropo-blog.service.d/,ropo-blog.service.d/hardening.conf
 etc/php/8.5/fpm                   | /etc/php/8.5/fpm                               | root:root          | 755 | 644 | only:php.ini,pool.d/,pool.d/www.conf
 etc/ssh/sshd_config.d             | /etc/ssh/sshd_config.d                         | root:root          | 755 | 644 |
-etc/sysctl.d                      | /etc/sysctl.d                                  | root:root          | 755 | 644 | only:99-hardening.conf
+etc/sysctl.d                      | /etc/sysctl.d                                  | root:root          | 755 | 644 | only:99-hardening.conf,99-protect-links.conf
