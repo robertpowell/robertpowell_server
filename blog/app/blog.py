@@ -9,7 +9,7 @@ import os
 import re
 import sqlite3
 import unicodedata
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 import markdown as md
@@ -32,6 +32,7 @@ app.config.update(
     SESSION_COOKIE_SECURE=True,       # admin session cookie only over https
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",    # not sent on cross-site POSTs
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=12),   # admin signs in again each day (was Flask's 31-day default)
     MAX_CONTENT_LENGTH=40 * 1024 * 1024,   # whole upload request; per-file cap is UPLOAD_MAX_BYTES
     MEDIA_DIR=os.environ.get("BLOG_MEDIA_DIR", os.path.join(os.path.dirname(DB), "media")),
     UPLOAD_MAX_BYTES=20 * 1024 * 1024,
@@ -161,6 +162,35 @@ def login_required(fn):
     return wrapper
 
 
+def safe_next(target):
+    """Only ever redirect within this site: a path that starts with one '/' and no scheme or host."""
+    if target and target.startswith("/") and not target.startswith("//") and "\\" not in target:
+        return target
+    return url_for("admin")
+
+
+# --- CSRF: one random token per session, carried as a hidden field in every admin form. ---
+# SameSite=Lax already stops cross-site POSTs in current browsers; this covers same-site
+# subdomains and older clients. The JSON upload endpoint checks Sec-Fetch-Site instead.
+
+def csrf_token():
+    if "csrf" not in session:
+        session["csrf"] = secrets.token_urlsafe(32)
+    return session["csrf"]
+
+
+CSRF_ENDPOINTS = {"login", "edit", "delete"}
+
+
+@app.before_request
+def check_csrf():
+    if request.method == "POST" and request.endpoint in CSRF_ENDPOINTS:
+        sent = request.form.get("csrf", "")
+        held = session.get("csrf", "")
+        if not held or not secrets.compare_digest(sent, held):
+            abort(400, "Form expired or missing its token. Reload the page and try again.")
+
+
 @app.template_filter("pretty_date")
 def pretty_date(value):
     if not value:
@@ -248,10 +278,12 @@ def login():
         pw = request.form.get("password", "")
         stored = app.config["ADMIN_PASSWORD_HASH"]
         if stored and check_password_hash(stored, pw):
+            session.clear()                       # fresh session on sign-in
             session["admin"] = True
+            session["csrf"] = secrets.token_urlsafe(32)
             session.permanent = True
             remember_ip(client_ip())
-            return redirect(request.args.get("next") or url_for("admin"))
+            return redirect(safe_next(request.args.get("next")))
         flash("That password didn't work.")
     return render_template("login.html")
 
@@ -456,6 +488,7 @@ def inject():
         pages = []
     return dict(pages=pages,
                 static_v=_static_mtime,
+                csrf_token=csrf_token,
                 site=app.config["SITE_NAME"],
                 tagline=app.config["SITE_TAGLINE"],
                 is_admin=bool(session.get("admin")),

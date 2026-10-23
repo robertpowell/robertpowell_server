@@ -3,6 +3,7 @@
 {% block content %}
 <h1 class="page-title">{{ 'Edit post' if post else 'New post' }}</h1>
 <form method="post" class="form">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
   <label for="title">Title</label>
   <input id="title" name="title" value="{{ post['title'] if post else '' }}" autocomplete="off">
 
@@ -48,6 +49,7 @@
 {% if post %}
 <form method="post" action="{{ url_for('delete', post_id=post['id']) }}" class="danger"
       data-confirm="Delete this post permanently?">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
   <button type="submit">Delete this post</button>
 </form>
 {% endif %}

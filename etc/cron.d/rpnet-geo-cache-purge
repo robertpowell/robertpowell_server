@@ -1,0 +1,4 @@
+# Security review 2026-10-23 (Linear ROP-288): robertpowell.net geo-IP cache grew to 15k files with no expiry.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+40 4 * * * www-data find /var/www/html/cache -name '*.cache' -type f -mtime +30 -delete
