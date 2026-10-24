@@ -1,0 +1,5 @@
+# Hourly: alert if robertpowell.net visit tracking (track.php -> MySQL visits.events) stops recording.
+# Added 2026-10-24 after MySQL sat stopped for 22 h unnoticed. Script mails itself; cron output only on bugs.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+23 * * * * root /usr/local/bin/visit-tracking-check.py >/dev/null 2>&1

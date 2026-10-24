@@ -484,7 +484,7 @@ def backup_status():
     except FileNotFoundError:
         return BAD, "No backup log", "restic has never run on this box"
     # log times are UTC; show as local
-    off = now - datetime.utcnow()
+    off = now - datetime.now(timezone.utc).replace(tzinfo=None)
     snap = ""
     env = dict(os.environ)
     try:

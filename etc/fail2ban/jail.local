@@ -53,6 +53,8 @@ maxretry = 3
 
 [apache-custom]
 enabled  = true
+# 2026-10-24: no per-ban mail (59 bans in one minute hit Fastmail's 50/min limit on 22 Oct); see 08:00 report
+action   = %(action_)s
 backend = auto
 logpath  = /var/log/apache2/access.log
 findtime = 86400
@@ -102,6 +104,8 @@ maxretry = 3
 [apache-auth]
 # Ban HTTP authentication brute force attempts
 enabled = true
+# 2026-10-24: no per-ban mail, see apache-custom note
+action = %(action_)s
 backend = auto
 port = http,https
 filter = apache-auth
