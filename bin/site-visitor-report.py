@@ -549,7 +549,51 @@ def git_status():
     return GOOD, f"In sync at {head}", "live files match the checkout, checkout matches GitHub"
 
 
-def status_html(bk, gt):
+def mysql_status():
+    """(colour, headline, detail) for MySQL and robertpowell.net visit tracking (track.php -> visits.events).
+    Added 2026-10-24 after a package postrm stopped mysql and nobody noticed for 22 h."""
+    rc, act = _run(["systemctl", "is-active", "mysql"])
+    if act != "active":
+        _, since = _run(["systemctl", "show", "mysql", "-p", "InactiveEnterTimestamp", "--value"])
+        return BAD, f"MySQL {act or 'unknown'}", (f"stopped since {since}; " if since else "") + \
+            "fix: install -d -o mysql -g adm -m 2750 /var/log/mysql && systemctl start mysql"
+    rc, _ = _run(["mysqladmin", "ping", "--silent"])
+    if rc != 0:
+        return BAD, "MySQL not answering", "service is active but mysqladmin ping fails; check /var/log/mysql/error.log"
+    rc, out = _run(["mysql", "-N", "-e",
+                    "SELECT COUNT(*), IFNULL(MAX(timestamp),'') FROM visits.events "
+                    "WHERE timestamp >= NOW() - INTERVAL 24 HOUR"])
+    if rc != 0 or not out:
+        return BAD, "MySQL up, visits query failed", "visits.events unreadable; check grants / table"
+    n, newest = out.split("\t") if "\t" in out else (out, "")
+    n = int(n)
+    # track.php connection failures in the last 24 h (Apache error log, UTC timestamps)
+    errs = 0
+    try:
+        day = datetime.now(timezone.utc) - timedelta(hours=24)
+        for ln in open("/var/log/apache2/error.log", errors="replace"):
+            if "Database connection failed" not in ln:
+                continue
+            m = re.match(r"\[\w{3} (\w{3}) +(\d{1,2}) (\d\d:\d\d:\d\d)\.\d+ (\d{4})\]", ln)
+            if m:
+                try:
+                    t = datetime.strptime(" ".join(m.groups()), "%b %d %H:%M:%S %Y").replace(tzinfo=timezone.utc)
+                    if t >= day:
+                        errs += 1
+                except ValueError:
+                    pass
+    except FileNotFoundError:
+        pass
+    newest_s = f", newest {newest[11:16]}" if newest else ""
+    if errs:
+        return WARN, f"Up, {errs} tracking error{'s' if errs != 1 else ''} in 24 h", \
+            f"track.php could not connect {errs}x; {n} visits recorded{newest_s}"
+    if n == 0:
+        return WARN, "Up, nothing recorded in 24 h", "robertpowell.net visits.events gained no rows; tracking may be broken"
+    return GOOD, f"Up, {n} visits recorded", f"robertpowell.net track.php -> visits.events, last 24 h{newest_s}"
+
+
+def status_html(bk, gt, db):
     def row(lab, c, head, detail):
         return (f'<tr><td width="10" bgcolor="{c}" style="width:10px;background:{c}">&nbsp;</td>'
                 f'<td style="padding:9px 12px;border-bottom:1px solid {RULE}">'
@@ -559,11 +603,11 @@ def status_html(bk, gt):
                 f'<div style="font:11px/1.5 ui-monospace,monospace;color:{MUT};margin-top:2px">{esc(detail)}</div></td></tr>')
     return (f'<tr><td style="padding-top:16px"><table width="100%" cellpadding="0" cellspacing="0" '
             f'style="background:{SURF};border:1px solid {RULE};border-collapse:collapse">'
-            f'{row("Backup", *bk)}{row("Code", *gt)}</table></td></tr>')
+            f'{row("Backup", *bk)}{row("Code", *gt)}{row("MySQL", *db)}</table></td></tr>')
 
 
-def status_text(bk, gt):
-    return f"Backup: {bk[1]} ({bk[2]})\nCode:   {gt[1]} ({gt[2]})\n"
+def status_text(bk, gt, db):
+    return f"Backup: {bk[1]} ({bk[2]})\nCode:   {gt[1]} ({gt[2]})\nMySQL:  {db[1]} ({db[2]})\n"
 
 
 def sender_for(label):
@@ -603,8 +647,8 @@ def main():
     ring.add(WATCH_OUTCODE)
 
     bans = banned()
-    bk, gt = backup_status(), git_status()
-    status = status_html(bk, gt)
+    bk, gt, db = backup_status(), git_status(), mysql_status()
+    status = status_html(bk, gt, db)
     day = datetime.now().strftime("%A %-d %B %Y")
     tag = "[TEST] " if os.environ.get("REPORT_TEST") else ""
     only = os.environ.get("REPORT_SITE", "")
@@ -629,7 +673,7 @@ def main():
         if any(v.get("banned") for v in vis):
             text += "\n\nBanned by fail2ban:\n" + "\n".join(line(v) for v in vis if v.get("banned"))
         contacts = contacts_sent(label)
-        text = status_text(bk, gt) + f"Contacts sent via the form: {contacts}\n\n" + text
+        text = status_text(bk, gt, db) + f"Contacts sent via the form: {contacts}\n\n" + text
         send(subject, render_site(label, vis, pages, bots, day, home, ring, contacts, status), text,
              sender_for(label))
         sent += 1
