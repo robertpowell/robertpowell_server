@@ -46,3 +46,4 @@ smtputf8_enable = no
 #smtp_bind_address6 = 2a03:b0c0:1:e0:0:1:b4e7:8001
 header_checks = 
 defer_transports = 
+cyrus_sasl_config_path = /etc/postfix/sasl

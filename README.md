@@ -51,12 +51,12 @@ Making the box match the checkout (after a `git pull`, or on a fresh server):
 
 ## A fresh server
 
-1. Ubuntu 24.04 with `apache2 php8.5-fpm php8.5-mbstring php8.5-curl php8.5-gd php8.5-mysql python3-venv postfix opendkim fail2ban restic sqlite3 mysql-server`.
+1. Ubuntu 26.04 LTS (in-place from 24.04 on 2026-10-26, Linear ROP-293) with `apache2 php8.5-fpm php8.5-mbstring php8.5-curl php8.5-gd php8.5-mysql python3-venv postfix opendkim fail2ban restic sqlite3 mysql-server`.
 2. Clone this repository to `/srv/rp-server`.
 3. Create the users `ropoblog` and the data directories listed above; put `blog.env` and the contact `secret` files in place.
 4. `python3 -m venv /opt/ropo-blog/venv && /opt/ropo-blog/venv/bin/pip install -r blog/requirements.txt`
 5. `./deploy.sh --apply`, then `a2ensite` each vhost, `a2enconf no-gzip-contact security-no-indexes`, `systemctl enable --now ropo-blog`.
-6. Certificates with `certbot --apache`; DKIM keys under `/etc/opendkim/keys`.
+6. Certificates with the `certbot` snap (`--apache`, webroot for new.robertpowell.com, dns-cloudflare for robertpowell.com); DKIM keys under `/etc/opendkim/keys`. `/etc/resolv.conf` is a static root-owned file pointing at the DigitalOcean resolvers (systemd-resolved 259 returns an empty MX for the local hostname robertpowell.net); `/etc/systemd/resolved.conf.d/no-etc-hosts.conf` is also kept. Postfix runs as `postfix.service`, MySQL 8.4 with caching_sha2_password everywhere, PHP from the Ubuntu archive (no PPA), sudo-rs + rust-coreutils.
 7. Restore data from restic if this is a rebuild.
 
 Deployment detail for the contact form and the daily report is in the two guides (Claude artifacts) linked from the memory notes.

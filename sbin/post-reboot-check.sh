@@ -2,7 +2,7 @@
 # One-shot health report after the 2026-09-06 reboot (hardening plan item T2).
 # Run by /etc/cron.d/post-reboot-check at boot; removes that cron entry when done.
 sleep 90
-K=$(uname -r); WANT="6.8.0-139-generic"
+K=$(uname -r); WANT="7.0.0-38-generic"
 out="Post-reboot check on $(hostname) at $(date -u '+%Y-%m-%d %H:%M:%S UTC')\n\n"
 ok=0; bad=0
 line() { if [ "$2" = "ok" ]; then ok=$((ok+1)); else bad=$((bad+1)); fi; out+="$(printf '%-38s %s\n' "$1" "$2")\n"; }
