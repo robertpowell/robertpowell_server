@@ -360,7 +360,8 @@ def banned_section(rows, th):
             f'closeness summary above.</div></td></tr>')
 
 
-def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, status="", tracked=None):
+def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, status="", tracked=None,
+                f2b=None, site_ips=frozenset(), gcache=None):
     banned_rows = [v for v in vis if v.get("banned")]
     vis = [v for v in vis if not v.get("banned")]
     guests = [v for v in vis if not v.get("known")]
@@ -495,6 +496,8 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
 
 {banned_section(banned_rows, th)}
 
+{fail2ban_box(f2b, label, site_ips, gcache or {}, th) if f2b else ""}
+
 {tracked_box(tracked)}
 
 {box("Most read", top, lambda k: label + k)}{box("Came from", refs, https)}{box("Countries", ctry)}
@@ -507,6 +510,126 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
  a town centroid, not a person. Rows tagged <i>hosting</i> or <i>proxy</i> are machines.
  </div></td></tr>
 </table></td></tr></table></body></html>'''
+
+
+# ---------- fail2ban: one service for the whole box, summarised in every email (ROP-321) ----------
+F2B_DB = "/var/lib/fail2ban/fail2ban.sqlite3"
+F2B_EXPECTED_JAILS = 11
+# Jails that protect one site; everything else watches all five vhosts (or ssh / the box).
+JAIL_SITE = {"blog-login": "robertpowell.com", "app404": "robertpowell.com",
+             "hc-contact": "highlyconfidential.co.uk"}
+
+
+def fail2ban_data():
+    """Jail table + top offenders for the last 24 h. Same three queries the old
+    fail2ban-report.sh ran, so the numbers are comparable with its emails."""
+    import sqlite3
+    d = {"active": False, "jails": [], "top": [], "tot": (0, 0, 0), "error": ""}
+    _, act = _run(["systemctl", "is-active", "fail2ban"])
+    d["active"] = act == "active"
+    rc, out = _run(["/usr/bin/fail2ban-client", "status"], 20)
+    names = []
+    for ln in out.splitlines():
+        if "Jail list:" in ln:
+            names = [j.strip() for j in ln.split("Jail list:")[1].split(",") if j.strip()]
+    since = int(datetime.now(timezone.utc).timestamp()) - HOURS * 3600
+    try:
+        con = sqlite3.connect(f"file:{F2B_DB}?mode=ro", uri=True, timeout=10)
+        cur = con.cursor()
+        for j in names:
+            _, st = _run(["/usr/bin/fail2ban-client", "status", j], 20)
+            now_banned = 0
+            for ln in st.splitlines():
+                if "Currently banned:" in ln:
+                    try:
+                        now_banned = int(ln.split(":")[-1])
+                    except ValueError:
+                        pass
+            cur.execute("SELECT COUNT(*), COALESCE(SUM(json_extract(data,'$.failures')),0) "
+                        "FROM bans WHERE jail=? AND timeofban >= ?", (j, since))
+            bans, fails = cur.fetchone()
+            d["jails"].append((j, now_banned, int(bans or 0), int(fails or 0)))
+        cur.execute("SELECT ip, COUNT(*) AS n, GROUP_CONCAT(DISTINCT jail) FROM bans "
+                    "WHERE timeofban >= ? GROUP BY ip ORDER BY n DESC, ip LIMIT 15", (since,))
+        d["top"] = [(ip, int(n), (jl or "").split(",")) for ip, n, jl in cur.fetchall()]
+        con.close()
+    except Exception as e:
+        d["error"] = str(e)[:120]
+    d["tot"] = (sum(x[1] for x in d["jails"]), sum(x[2] for x in d["jails"]), sum(x[3] for x in d["jails"]))
+    return d
+
+
+def fail2ban_status(f2b):
+    """(colour, headline, detail) row for the status strip."""
+    if not f2b["active"]:
+        return BAD, "Fail2Ban not running", "systemctl status fail2ban; nothing is being banned"
+    n = len(f2b["jails"])
+    now_b, b24, f24 = f2b["tot"]
+    detail = f"{n} jails; {b24} bans and {f24} failed attempts in the last 24 h"
+    if f2b["error"]:
+        return WARN, f"Active, {n} jails, DB unreadable", f2b["error"]
+    if n < F2B_EXPECTED_JAILS:
+        return WARN, f"Active but only {n} of {F2B_EXPECTED_JAILS} jails", detail + "; check jail.local"
+    return GOOD, f"Active, {n} jails, {now_b} banned now", detail
+
+
+def fail2ban_text(f2b):
+    lines = ["Fail2Ban, last 24 h (jail  banned-now  bans  failed):"]
+    lines += [f"  {j:<16} {c:>5} {b:>5} {f:>6}" for j, c, b, f in f2b["jails"]]
+    now_b, b24, f24 = f2b["tot"]
+    lines.append(f"  {'total':<16} {now_b:>5} {b24:>5} {f24:>6}")
+    if f2b["top"]:
+        lines.append("Top offenders:")
+        lines += [f"  {ip:<40} {n:>3}  {', '.join(jl)}" for ip, n, jl in f2b["top"]]
+    return "\n".join(lines) + "\n"
+
+
+def fail2ban_box(f2b, label, site_ips, gcache, th):
+    """Jails + top offenders, identical in every email except the 'hit this site' chips."""
+    tdc = (f'padding:7px 12px;border-bottom:1px solid {RULE};font:13px -apple-system,Segoe UI,Arial,'
+           f'sans-serif;color:{INK};vertical-align:top')
+    num = f'{tdc};font:600 13px ui-monospace,monospace;text-align:right'
+    sub = f'font:11px ui-monospace,monospace;color:{FNT}'
+    chip = (f'<span style="display:inline-block;font:600 9px/1.5 ui-monospace,monospace;color:#fff;'
+            f'background:{A};padding:1px 6px;border-radius:2px;margin-left:5px">hit this site</span>')
+    site_tag = lambda j: (f'<div style="{sub}">{esc(JAIL_SITE[j])} only</div>' if j in JAIL_SITE else "")
+    jail_rows = "".join(
+        f'<tr><td style="{tdc}"><span style="font:600 12px ui-monospace,monospace">{esc(j)}</span>{site_tag(j)}</td>'
+        f'<td style="{num};color:{"#b3261e" if c else FNT}">{c}</td>'
+        f'<td style="{num};color:{A if b else FNT}">{b}</td><td style="{num};color:{MUT}">{f}</td></tr>'
+        for j, c, b, f in f2b["jails"])
+    now_b, b24, f24 = f2b["tot"]
+    jail_rows += (f'<tr style="background:{BG}"><td style="{tdc};font-weight:700">Total</td>'
+                  f'<td style="{num};color:#b3261e">{now_b}</td><td style="{num};color:{A}">{b24}</td>'
+                  f'<td style="{num};color:{MUT}">{f24}</td></tr>')
+    if f2b["top"]:
+        off_rows = ""
+        for ip, n, jl in f2b["top"]:
+            g = gcache.get(ip, {})
+            where = ", ".join(x for x in (g.get("city", ""), g.get("country", "")) if x) or "unplaced"
+            off_rows += (f'<tr><td style="{tdc}"><span style="font:600 12px ui-monospace,monospace">{esc(ip)}</span>'
+                         f'{chip if ip in site_ips else ""}<div style="{sub}">{esc(where)}</div></td>'
+                         f'<td style="{num};color:{A}">{n}</td>'
+                         f'<td style="{tdc};font:11px ui-monospace,monospace;color:{MUT}">{esc(", ".join(jl))}</td></tr>')
+    else:
+        off_rows = (f'<tr><td colspan="3" style="padding:12px;font:13px -apple-system,Segoe UI,Arial,sans-serif;'
+                    f'color:{FNT}">No bans recorded in the last 24 hours.</td></tr>')
+    hits = sum(1 for ip, _, _ in f2b["top"] if ip in site_ips)
+    head = (f'<div style="font:600 11px/1 ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;'
+            f'color:{FNT};padding-bottom:8px">')
+    tbl = (f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
+           f'border-collapse:collapse">')
+    return (f'<tr><td style="padding-top:22px">{head}Fail2Ban &middot; last 24 h &middot; jails</div>{tbl}'
+            f'<tr style="background:{BG}"><th align="left" style="{th}">Jail</th><th align="right" style="{th}">Banned now</th>'
+            f'<th align="right" style="{th}">Bans 24 h</th><th align="right" style="{th}">Failed attempts</th></tr>'
+            f'{jail_rows}</table></td></tr>'
+            f'<tr><td style="padding-top:16px">{head}Top offenders &middot; {len(f2b["top"])} of {b24} bans'
+            f'{f" &middot; {hits} also hit {esc(label)}" if hits else ""}</div>{tbl}'
+            f'<tr style="background:{BG}"><th align="left" style="{th}">IP &amp; where</th><th align="right" style="{th}">Bans</th>'
+            f'<th align="left" style="{th}">Jails triggered</th></tr>{off_rows}</table>'
+            f'<div style="font:11px/1.6 ui-monospace,monospace;color:{FNT};margin-top:6px">'
+            f'One fail2ban for the whole box, so this block is the same in every site&#39;s email; '
+            f'<i>hit this site</i> marks an offender that also appears in {esc(label)}&#39;s own log today.</div></td></tr>')
 
 
 # ---------- box status: last backup + git state, shown on every report ----------
@@ -653,7 +776,7 @@ def mysql_status():
     return GOOD, f"Up, {n} visits recorded", f"robertpowell.net track.php -> visits.events, last 24 h{newest_s}"
 
 
-def status_html(bk, gt, db):
+def status_html(bk, gt, db, fb):
     def row(lab, c, head, detail):
         return (f'<tr><td width="10" bgcolor="{c}" style="width:10px;background:{c}">&nbsp;</td>'
                 f'<td style="padding:9px 12px;border-bottom:1px solid {RULE}">'
@@ -663,11 +786,12 @@ def status_html(bk, gt, db):
                 f'<div style="font:11px/1.5 ui-monospace,monospace;color:{MUT};margin-top:2px">{esc(detail)}</div></td></tr>')
     return (f'<tr><td style="padding-top:16px"><table width="100%" cellpadding="0" cellspacing="0" '
             f'style="background:{SURF};border:1px solid {RULE};border-collapse:collapse">'
-            f'{row("Backup", *bk)}{row("Code", *gt)}{row("MySQL", *db)}</table></td></tr>')
+            f'{row("Backup", *bk)}{row("Code", *gt)}{row("MySQL", *db)}{row("Fail2Ban", *fb)}</table></td></tr>')
 
 
-def status_text(bk, gt, db):
-    return f"Backup: {bk[1]} ({bk[2]})\nCode:   {gt[1]} ({gt[2]})\nMySQL:  {db[1]} ({db[2]})\n"
+def status_text(bk, gt, db, fb):
+    return (f"Backup:   {bk[1]} ({bk[2]})\nCode:     {gt[1]} ({gt[2]})\nMySQL:    {db[1]} ({db[2]})\n"
+            f"Fail2Ban: {fb[1]} ({fb[2]})\n")
 
 
 def sender_for(label):
@@ -708,7 +832,10 @@ def main():
 
     bans = banned()
     bk, gt, db = backup_status(), git_status(), mysql_status()
-    status = status_html(bk, gt, db)
+    f2b = fail2ban_data()
+    fb = fail2ban_status(f2b)
+    geo([ip for ip, _, _ in f2b["top"]], gcache)   # same cache + batch call as the visitor rows
+    status = status_html(bk, gt, db, fb)
     day = datetime.now().strftime("%A %-d %B %Y")
     tag = "[TEST] " if os.environ.get("REPORT_TEST") else ""
     only = os.environ.get("REPORT_SITE", "")
@@ -734,13 +861,15 @@ def main():
             text += "\n\nBanned by fail2ban:\n" + "\n".join(line(v) for v in vis if v.get("banned"))
         contacts = contacts_sent(label)
         tracked = tracked_visits(label)
-        text = status_text(bk, gt, db) + f"Contacts sent via the form: {contacts}\n\n" + text
+        text = status_text(bk, gt, db, fb) + f"Contacts sent via the form: {contacts}\n\n" + text
+        text += "\n\n" + fail2ban_text(f2b)
         if tracked is not None:
             text += f"\n\nTracked visits (track.php, 24 h): {len(tracked)}\n" + "\n".join(
                 f"{r['when']}  {r['ip']:<16} {(r['city'] or r['country'] or '?'):<16} {r['page']}"
                 for r in tracked[:20])
-        send(subject, render_site(label, vis, pages, bots, day, home, ring, contacts, status, tracked), text,
-             sender_for(label))
+        site_ips = {r["ip"] for r in rows}
+        send(subject, render_site(label, vis, pages, bots, day, home, ring, contacts, status, tracked,
+                                  f2b, site_ips, gcache), text, sender_for(label))
         sent += 1
         print(f"  {label}: sent — {len(guests)} visitors, {len(pages)} views, {len(bots)} bot")
 
