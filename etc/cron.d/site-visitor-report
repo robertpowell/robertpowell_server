@@ -1,6 +1,6 @@
 # Standard daily visitor report: one email per site, all from the same template (ROP-320).
-# 08:15, after the 08:00 Fail2Ban report. Replaced blog-visitor-report (Sep 2026) and the
+# 08:00 (moved from 08:15 on 2026-10-28, the Fail2Ban email it followed is gone). Replaced blog-visitor-report (Sep 2026) and the
 # legacy robertpowell.net visitor-report.php at 09:00 (retired 2026-10-28).
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-15 8 * * * root /usr/local/bin/site-visitor-report.py >> /var/log/visitor-report-all.log 2>&1
+0 8 * * * root /usr/local/bin/site-visitor-report.py >> /var/log/visitor-report-all.log 2>&1
