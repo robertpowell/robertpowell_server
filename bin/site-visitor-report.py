@@ -48,6 +48,33 @@ CONTACT_DATA = {
     "highlyconfidential.co.uk": "/var/www/highlyconfidential.co.uk/data",
 }
 
+# Sites whose pages include track.php (-> MySQL visits.events). Only robertpowell.net until ROP-291
+# extends tracking to the other four. Replaces the legacy 09:00 visitor-report.php email (ROP-320).
+TRACKED = {"robertpowell.net"}
+
+
+def tracked_visits(label):
+    """Last 24 h of track.php rows for this site, newest first (None = site has no tracking).
+    Crawler rows and the updown.io monitor are excluded, like the old PHP report did."""
+    if label not in TRACKED:
+        return None
+    rc, out = _run(["mysql", "-N", "-B", "-e",
+                    "SELECT DATE_FORMAT(timestamp,'%H:%i'), ipaddress, IFNULL(city,''), IFNULL(country,''), "
+                    "IFNULL(pagevisited,'/'), IFNULL(browser,''), IFNULL(os,''), IFNULL(device,'') "
+                    "FROM visits.events WHERE timestamp >= NOW() - INTERVAL 24 HOUR "
+                    "AND IFNULL(iscrawler,0) = 0 AND (useragent IS NULL OR useragent NOT LIKE '%updown.io%') "
+                    "ORDER BY id DESC"], 20)
+    if rc != 0:
+        return []
+    rows = []
+    for ln in out.splitlines():
+        f = ln.split("\t")
+        if len(f) >= 8:
+            rows.append(dict(when=f[0], ip=f[1], city=f[2], country=f[3], page=f[4] or "/",
+                             browser=f[5], os=f[6], device=f[7]))
+    return rows
+
+
 # matches both "combined" and "vhost_combined" (leading %v:%p)
 LINE = re.compile(
     r'^(?:(?P<vhost>[\w.\-]+):\d+\s+)?(?P<ip>\S+) \S+ \S+ \[(?P<ts>[^\]]+)\] '
@@ -333,7 +360,7 @@ def banned_section(rows, th):
             f'closeness summary above.</div></td></tr>')
 
 
-def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, status=""):
+def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, status="", tracked=None):
     banned_rows = [v for v in vis if v.get("banned")]
     vis = [v for v in vis if not v.get("banned")]
     guests = [v for v in vis if not v.get("known")]
@@ -390,6 +417,37 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
     th = (f'padding:8px 12px;font:600 9px ui-monospace,monospace;letter-spacing:.09em;'
           f'text-transform:uppercase;color:{FNT};border-bottom:1px solid {RULE}')
 
+    def tracked_box(rows):
+        # Same box as the other sections; only rendered for a site that feeds visits.events.
+        if rows is None:
+            return ""
+        tdc = (f'padding:7px 12px;border-bottom:1px solid {RULE};font:13px -apple-system,Segoe UI,Arial,'
+               f'sans-serif;color:{INK};vertical-align:top')
+        sub = f'font:11px ui-monospace,monospace;color:{FNT}'
+        if not rows:
+            body = (f'<tr><td colspan="4" style="padding:12px;font:13px -apple-system,Segoe UI,Arial,sans-serif;'
+                    f'color:{FNT}">No tracked visits in the last 24 hours.</td></tr>')
+        else:
+            body = "".join(
+                f'<tr><td style="{tdc}">{esc(r["when"])}</td>'
+                f'<td style="{tdc}">{esc(r["ip"])}<div style="{sub}">'
+                f'{esc(", ".join(x for x in (r["city"], r["country"]) if x) or "unplaced")}</div></td>'
+                f'<td style="{tdc}">{link(r["page"][:40], label + r["page"], INK)}</td>'
+                f'<td style="{tdc}">{esc(" / ".join(x for x in (r["browser"], r["os"], r["device"]) if x and x != "UNK") or "unknown")}</td></tr>'
+                for r in rows[:20])
+        n = len(rows)
+        title = f'Tracked visits &middot; {n} in 24 h' + (', newest 20 shown' if n > 20 else '')
+        return (f'<tr><td style="padding-top:22px"><div style="font:600 11px/1 ui-monospace,monospace;'
+                f'letter-spacing:.09em;text-transform:uppercase;color:{FNT};padding-bottom:8px">{title}</div>'
+                f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
+                f'border-collapse:collapse"><tr style="background:{BG}">'
+                f'<th align="left" style="{th}">When</th><th align="left" style="{th}">Who / where</th>'
+                f'<th align="left" style="{th}">Page</th><th align="left" style="{th}">Browser / OS / device</th></tr>'
+                f'{body}</table>'
+                f'<div style="font:11px/1.6 ui-monospace,monospace;color:{FNT};margin-top:6px">'
+                f'From track.php rows in MySQL (visits.events), not the access log; crawlers and the uptime monitor excluded.</div>'
+                f'</td></tr>')
+
     return f'''<!doctype html><html><body style="margin:0;padding:0;background:{BG}">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:{BG};padding:24px 12px">
 <tr><td align="center"><table width="650" cellpadding="0" cellspacing="0" style="max-width:650px;width:100%">
@@ -436,6 +494,8 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
   {rows_html(vis)}</table></td></tr>
 
 {banned_section(banned_rows, th)}
+
+{tracked_box(tracked)}
 
 {box("Most read", top, lambda k: label + k)}{box("Came from", refs, https)}{box("Countries", ctry)}
 
@@ -673,8 +733,13 @@ def main():
         if any(v.get("banned") for v in vis):
             text += "\n\nBanned by fail2ban:\n" + "\n".join(line(v) for v in vis if v.get("banned"))
         contacts = contacts_sent(label)
+        tracked = tracked_visits(label)
         text = status_text(bk, gt, db) + f"Contacts sent via the form: {contacts}\n\n" + text
-        send(subject, render_site(label, vis, pages, bots, day, home, ring, contacts, status), text,
+        if tracked is not None:
+            text += f"\n\nTracked visits (track.php, 24 h): {len(tracked)}\n" + "\n".join(
+                f"{r['when']}  {r['ip']:<16} {(r['city'] or r['country'] or '?'):<16} {r['page']}"
+                for r in tracked[:20])
+        send(subject, render_site(label, vis, pages, bots, day, home, ring, contacts, status, tracked), text,
              sender_for(label))
         sent += 1
         print(f"  {label}: sent — {len(guests)} visitors, {len(pages)} views, {len(bots)} bot")
