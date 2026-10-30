@@ -12,8 +12,10 @@ action = %(action_mw)s
 # 81.129.151.215 = admin IP
 # 178.62.75.145 188.166.137.38 2a03:b0c0:1:e0:0:1:b4e7:8001 = this server's own addresses
 #   (self-tests over the public IPv6 got the box banned during the 2026-09-05 OWASP scan)
+# 100.64.0.0/10 + fd7a:115c:a1e0::/48 = the Tailscale tailnet (peers are authenticated by Tailscale), added 2026-10-30
 # updown.io monitoring nodes (resolve ips.updown.io for updates)
 ignoreip = 127.0.0.1/8 ::1 81.129.151.215 81.103.25.79
+            100.64.0.0/10 fd7a:115c:a1e0::/48
             178.62.75.145 188.166.137.38 2a03:b0c0:1:e0:0:1:b4e7:8001
             45.32.74.41 104.238.136.194 192.99.37.47
             91.121.222.175 104.238.159.87 102.212.60.78
