@@ -836,7 +836,7 @@ def waf_status():
         pass
     top = ", ".join(f"{r} x{n}" for r, n in rules.most_common(3)) or "no rule hits"
     if mode == "DetectionOnly":
-        return (WARN if hits > 50 else GOOD), f"Detection only, {hits} alerts in 24 h", f"soak until ~7 Nov, then On; top rules: {top}"
+        return (WARN if hits > 50 else GOOD), f"Detection only, {hits} alerts in 24 h", f"soak until 3 Nov, then On; top rules: {top}"
     if mode == "On":
         return GOOD, f"Blocking, {denied} denied / {hits} alerts in 24 h", f"OWASP CRS 3.3.8, PL1; top rules: {top}"
     return WARN, f"SecRuleEngine {mode}", "/etc/modsecurity/modsecurity.conf"
