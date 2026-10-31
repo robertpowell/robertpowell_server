@@ -514,7 +514,7 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
 
 # ---------- fail2ban: one service for the whole box, summarised in every email (ROP-321) ----------
 F2B_DB = "/var/lib/fail2ban/fail2ban.sqlite3"
-F2B_EXPECTED_JAILS = 9  # 2026-10-31: shellprobe+connect+php-url-fopen merged into apache-probe
+F2B_EXPECTED_JAILS = 10  # 2026-10-31: shellprobe+connect+php-url-fopen merged into apache-probe; apache-modsecurity added
 # Jails that protect one site; everything else watches all five vhosts (or ssh / the box).
 JAIL_SITE = {"blog-login": "robertpowell.com", "app404": "robertpowell.com",
              "hc-contact": "highlyconfidential.co.uk"}
@@ -776,7 +776,73 @@ def mysql_status():
     return GOOD, f"Up, {n} visits recorded", f"robertpowell.net track.php -> visits.events, last 24 h{newest_s}"
 
 
-def status_html(bk, gt, db, fb):
+def geoip_status():
+    """(colour, headline, detail) for the nftables country filter (35 allowed countries, ROP-339)."""
+    rc, out = _run(["nft", "-j", "list", "table", "inet", "geoip-filter"], 20)
+    if rc != 0 or not out:
+        return BAD, "GeoIP filter not loaded", "nft table inet geoip-filter is missing; systemctl status geoip-nftables"
+    try:
+        objs = json.loads(out)["nftables"]
+        sets = {o["set"]["name"]: len(o["set"].get("elem", [])) for o in objs if "set" in o}
+        total = next((e["counter"]["packets"] for r in objs if "rule" in r for e in r["rule"].get("expr", []) if "counter" in e), None)
+    except Exception as e:
+        return WARN, "GeoIP filter unreadable", str(e)[:120]
+    if sets.get("allowed_v4", 0) < 1000:
+        return BAD, f"GeoIP allow-list only {sets.get('allowed_v4', 0)} IPv4 ranges", "a bad weekly build would block real visitors; check /var/log/geoip-nftables-update.log"
+    rc, j = _run(["journalctl", "-k", "--since", "24 hours ago", "-o", "cat"], 20)
+    sampled = sum(1 for ln in j.splitlines() if "geoip-drop" in ln) if rc == 0 else 0
+    built = ""
+    try:
+        for ln in open("/etc/nftables.d/geoip-allow.nft"):
+            if "auto-generated" in ln:
+                built = ln.split("auto-generated")[1].split()[0][:10]; break
+    except OSError:
+        pass
+    tot = f"{total:,} dropped since load" if total is not None else "counter unavailable"
+    return GOOD, f"Active, {sampled} drops logged in 24 h", f"{tot}; {sets.get('allowed_v4', 0):,} IPv4 / {sets.get('allowed_v6', 0):,} IPv6 ranges, 35 countries, built {built}"
+
+
+def waf_status():
+    """(colour, headline, detail) for ModSecurity + OWASP CRS (ROP-340)."""
+    rc, mods = _run(["apache2ctl", "-M"], 20)
+    if "security2_module" not in mods:
+        return BAD, "ModSecurity not loaded", "a2enmod security2 && systemctl reload apache2"
+    mode = "unknown"
+    try:
+        for ln in open("/etc/modsecurity/modsecurity.conf"):
+            if ln.startswith("SecRuleEngine"):
+                mode = ln.split()[1]; break
+    except OSError:
+        pass
+    since = datetime.now() - timedelta(hours=24)
+    hits, denied, rules = 0, 0, Counter()
+    try:
+        cur_t, cur_ids, cur_denied = None, set(), False
+        for ln in open("/var/log/apache2/modsec_audit.log", errors="replace"):
+            if ln.startswith("--") and ln.rstrip().endswith("-A--"):
+                cur_t, cur_ids, cur_denied = None, set(), False
+            elif cur_t is None and ln.startswith("["):
+                try:
+                    cur_t = datetime.strptime(ln[1:21], "%d/%b/%Y:%H:%M:%S")
+                except ValueError:
+                    cur_t = datetime.min
+            elif ln.startswith("Message:") or ln.startswith("Apache-Error:"):
+                m = re.search(r'\[id "(\d+)"\]', ln)
+                if m: cur_ids.add(m.group(1))
+                if "Access denied" in ln: cur_denied = True
+            elif ln.startswith("--") and ln.rstrip().endswith("-Z--") and cur_t and cur_t >= since:
+                hits += 1; denied += cur_denied; rules.update(i for i in cur_ids if not i.startswith(("949", "980", "959")))
+    except OSError:
+        pass
+    top = ", ".join(f"{r} x{n}" for r, n in rules.most_common(3)) or "no rule hits"
+    if mode == "DetectionOnly":
+        return (WARN if hits > 50 else GOOD), f"Detection only, {hits} alerts in 24 h", f"soak until ~7 Nov, then On; top rules: {top}"
+    if mode == "On":
+        return GOOD, f"Blocking, {denied} denied / {hits} alerts in 24 h", f"OWASP CRS 3.3.8, PL1; top rules: {top}"
+    return WARN, f"SecRuleEngine {mode}", "/etc/modsecurity/modsecurity.conf"
+
+
+def status_html(bk, gt, db, fb, gi, wf):
     def row(lab, c, head, detail):
         return (f'<tr><td width="10" bgcolor="{c}" style="width:10px;background:{c}">&nbsp;</td>'
                 f'<td style="padding:9px 12px;border-bottom:1px solid {RULE}">'
@@ -786,12 +852,12 @@ def status_html(bk, gt, db, fb):
                 f'<div style="font:11px/1.5 ui-monospace,monospace;color:{MUT};margin-top:2px">{esc(detail)}</div></td></tr>')
     return (f'<tr><td style="padding-top:16px"><table width="100%" cellpadding="0" cellspacing="0" '
             f'style="background:{SURF};border:1px solid {RULE};border-collapse:collapse">'
-            f'{row("Backup", *bk)}{row("Code", *gt)}{row("MySQL", *db)}{row("Fail2Ban", *fb)}</table></td></tr>')
+            f'{row("Backup", *bk)}{row("Code", *gt)}{row("MySQL", *db)}{row("Fail2Ban", *fb)}{row("GeoIP", *gi)}{row("WAF", *wf)}</table></td></tr>')
 
 
-def status_text(bk, gt, db, fb):
+def status_text(bk, gt, db, fb, gi, wf):
     return (f"Backup:   {bk[1]} ({bk[2]})\nCode:     {gt[1]} ({gt[2]})\nMySQL:    {db[1]} ({db[2]})\n"
-            f"Fail2Ban: {fb[1]} ({fb[2]})\n")
+            f"Fail2Ban: {fb[1]} ({fb[2]})\nGeoIP:    {gi[1]} ({gi[2]})\nWAF:      {wf[1]} ({wf[2]})\n")
 
 
 def sender_for(label):
@@ -834,8 +900,9 @@ def main():
     bk, gt, db = backup_status(), git_status(), mysql_status()
     f2b = fail2ban_data()
     fb = fail2ban_status(f2b)
+    gi, wf = geoip_status(), waf_status()
     geo([ip for ip, _, _ in f2b["top"]], gcache)   # same cache + batch call as the visitor rows
-    status = status_html(bk, gt, db, fb)
+    status = status_html(bk, gt, db, fb, gi, wf)
     day = datetime.now().strftime("%A %-d %B %Y")
     tag = "[TEST] " if os.environ.get("REPORT_TEST") else ""
     only = os.environ.get("REPORT_SITE", "")
@@ -861,7 +928,7 @@ def main():
             text += "\n\nBanned by fail2ban:\n" + "\n".join(line(v) for v in vis if v.get("banned"))
         contacts = contacts_sent(label)
         tracked = tracked_visits(label)
-        text = status_text(bk, gt, db, fb) + f"Contacts sent via the form: {contacts}\n\n" + text
+        text = status_text(bk, gt, db, fb, gi, wf) + f"Contacts sent via the form: {contacts}\n\n" + text
         text += "\n\n" + fail2ban_text(f2b)
         if tracked is not None:
             text += f"\n\nTracked visits (track.php, 24 h): {len(tracked)}\n" + "\n".join(

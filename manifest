@@ -21,15 +21,16 @@ bin                               | /usr/local/bin                              
 sbin                              | /usr/local/sbin                                | root:root          | 755 | 700 |
 etc/apache2/sites-available       | /etc/apache2/sites-available                   | root:root          | 755 | 644 | 000-default*,default-ssl*
 etc/apache2/conf-available        | /etc/apache2/conf-available                    | root:root          | 755 | 644 | only:no-gzip-contact.conf,security-no-indexes.conf
-etc/fail2ban                      | /etc/fail2ban                                  | root:root          | 755 | 644 | only:jail.local,jail.d/,jail.d/blog.local,filter.d/,filter.d/200visits.conf,filter.d/apache-block-scan-bots.conf,filter.d/apache-custom.conf,filter.d/apache-unavaulable.conf,filter.d/app404.conf,filter.d/blog-login.conf,filter.d/connect.conf,filter.d/geo-block.conf,filter.d/hc-contact.conf,filter.d/shellprobe.conf
+etc/fail2ban                      | /etc/fail2ban                                  | root:root          | 755 | 644 | only:jail.local,jail.d/,jail.d/blog.local,filter.d/,filter.d/200visits.conf,filter.d/apache-block-scan-bots.conf,filter.d/apache-custom.conf,filter.d/apache-probe.conf,filter.d/apache-unavaulable.conf,filter.d/app404.conf,filter.d/blog-login.conf,filter.d/connect.conf,filter.d/geo-block.conf,filter.d/hc-contact.conf,filter.d/shellprobe.conf
 etc/cron.d                        | /etc/cron.d                                    | root:root          | 755 | 644 | .placeholder,certbot,e2scrub_all,php,popularity-contest,sysstat
-etc/logrotate.d                   | /etc/logrotate.d                               | root:root          | 755 | 644 | only:contact-data
+etc/logrotate.d                   | /etc/logrotate.d                               | root:root          | 755 | 644 | only:contact-data,modsecurity
 etc/restic                        | /etc/restic                                    | root:root          | 755 | 644 |
 etc/postfix                       | /etc/postfix                                   | root:root          | 755 | 644 | *.db,*.proto,dynamicmaps*,makedefs.out,post-install,postfix-files*,postfix-script,sasl/
 etc/opendkim                      | /etc/opendkim                                  | root:root          | 755 | 644 | keys/
-etc/systemd/system                | /etc/systemd/system                            | root:root          | 755 | 644 | only:ropo-blog.service,ropo-blog.service.d/,ropo-blog.service.d/hardening.conf
+etc/systemd/system                | /etc/systemd/system                            | root:root          | 755 | 644 | only:geoip-nftables.service,ropo-blog.service,ropo-blog.service.d/,ropo-blog.service.d/hardening.conf
 etc/php/8.5/fpm                   | /etc/php/8.5/fpm                               | root:root          | 755 | 644 | only:php.ini,pool.d/,pool.d/www.conf
 etc/ssh/sshd_config.d             | /etc/ssh/sshd_config.d                         | root:root          | 755 | 644 |
 etc/sysctl.d                      | /etc/sysctl.d                                  | root:root          | 755 | 644 | only:99-hardening.conf,99-protect-links.conf
 etc/systemd/resolved.conf.d       | /etc/systemd/resolved.conf.d                   | root:root          | 755 | 644 |
 etc/apt/sources.list.d            | /etc/apt/sources.list.d                        | root:root          | 755 | 644 |
+etc/modsecurity                   | /etc/modsecurity                               | root:root          | 755 | 644 | only:modsecurity.conf,crs/,crs/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf,crs/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf,crs/crs-setup.conf

@@ -165,3 +165,17 @@ logpath  = /var/log/apache2/new.robertpowell.com-access.log
 findtime = 10m
 maxretry = 5
 bantime  = 1h
+
+# 2026-10-31 (ROP-340, parity with ropo.uk): ban addresses that ModSecurity denies repeatedly.
+# Idle while modsecurity.conf is DetectionOnly (nothing is "Access denied" then); starts banning the day
+# the engine goes On. Short bantime so an unforeseen false positive self-heals; recidive escalates.
+[apache-modsecurity]
+enabled  = true
+backend  = auto
+port     = http,https
+filter   = apache-modsecurity
+logpath  = /var/log/apache2/*error.log
+findtime = 600
+maxretry = 3
+bantime  = 1d
+action   = %(action_)s

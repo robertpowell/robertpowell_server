@@ -1,0 +1,2 @@
+# Weekly GeoIP CIDR refresh for the nftables country filter (Sunday 03:00). Aborts without touching the firewall if any download fails.
+0 3 * * 0 root /usr/local/sbin/geoip-nftables-update.sh --apply >> /var/log/geoip-nftables-update.log 2>&1
