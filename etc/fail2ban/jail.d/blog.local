@@ -6,18 +6,9 @@
 # permalinks, missing favicons - so pointing it at this log would ban real
 # readers. The jails below match attack signatures, not status codes.
 
+# 2026-10-31: connect / shellprobe / php-url-fopen were merged into [apache-probe], whose
+# logpath glob (/var/log/apache2/*access.log) already includes this log.
+
 [apache-custom]
-logpath  = /var/log/apache2/access.log
-           /var/log/apache2/new.robertpowell.com-access.log
-
-[connect]
-logpath  = /var/log/apache2/access.log
-           /var/log/apache2/new.robertpowell.com-access.log
-
-[shellprobe]
-logpath  = /var/log/apache2/access.log
-           /var/log/apache2/new.robertpowell.com-access.log
-
-[php-url-fopen]
 logpath  = /var/log/apache2/access.log
            /var/log/apache2/new.robertpowell.com-access.log

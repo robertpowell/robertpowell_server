@@ -514,7 +514,7 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
 
 # ---------- fail2ban: one service for the whole box, summarised in every email (ROP-321) ----------
 F2B_DB = "/var/lib/fail2ban/fail2ban.sqlite3"
-F2B_EXPECTED_JAILS = 11
+F2B_EXPECTED_JAILS = 9  # 2026-10-31: shellprobe+connect+php-url-fopen merged into apache-probe
 # Jails that protect one site; everything else watches all five vhosts (or ssh / the box).
 JAIL_SITE = {"blog-login": "robertpowell.com", "app404": "robertpowell.com",
              "hc-contact": "highlyconfidential.co.uk"}

@@ -33,6 +33,10 @@ maxretry = 2
 [sshd]
 enabled = true
 maxretry = 2
+# 2026-10-31 (parity with ropo.uk ROP-330): aggressive also counts pre-login drops, bad banners
+# and key-exchange resets; count over a day, not 10 minutes.
+mode = aggressive
+findtime = 86400
 
 [app404]
 enabled = true
@@ -54,6 +58,7 @@ maxretry = 3
 # [apache-block-scan-bots] - REMOVED: patterns merged into apache-custom
 
 [apache-custom]
+# 2026-10-31: user-agent patterns only; all path probes are in [apache-probe] below.
 enabled  = true
 # 2026-10-24: no per-ban mail (59 bans in one minute hit Fastmail's 50/min limit on 22 Oct); see 08:00 report
 action   = %(action_)s
@@ -63,7 +68,8 @@ findtime = 86400
 maxretry = 1
 
 [php-url-fopen]
-enabled = true
+# 2026-10-31: merged into [apache-probe]
+enabled = false
 backend = auto
 port = http,https
 filter = php-url-fopen
@@ -72,7 +78,8 @@ maxretry = 1
 findtime = 1d
 
 [connect]
-enabled = true
+# 2026-10-31: merged into [apache-probe]
+enabled = false
 backend = auto
 port = http,https
 filter = connect
@@ -83,9 +90,27 @@ action = %(action_mw)s
 
 # [geo-block] - REMOVED: geo-blocking handled by PHP check_allowed_ip.php
 
+[apache-probe]
+# 2026-10-31: ONE jail for single-hit probes on paths that are never legitimate here (.env, .git,
+# traversal, web shells, WordPress, admin consoles, appliance exploits, AI-agent/MCP probes, CONNECT,
+# non-HTTP garbage, command injection). Adopted from the ropo.uk box (ROP-329/330) with this box's
+# own patterns merged in; replaces shellprobe, connect, php-url-fopen and apache-custom's path rules.
+# Reads EVERY access log, including the vhost_combined ones that no probe jail watched before.
+# No per-ban mail (same reason as apache-custom, 2026-10-24): bans show in the daily report.
+enabled  = true
+backend  = auto
+port     = http,https
+filter   = apache-probe
+logpath  = /var/log/apache2/*access.log
+findtime = 86400
+maxretry = 1
+bantime  = 30d
+action   = %(action_)s
+
 [shellprobe]
 # Instant ban for shell/RCE probes (cgi-bin, path traversal, command injection)
-enabled = true
+# 2026-10-31: merged into [apache-probe]
+enabled = false
 backend = auto
 port = http,https
 filter = shellprobe
