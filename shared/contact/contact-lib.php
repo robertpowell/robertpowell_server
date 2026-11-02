@@ -29,6 +29,11 @@ const SITES = [
         'recipient' => 'robert@ultrasecret.net', 'sender' => 'server@ultrasecret.net',
         'data' => '/var/www/shared/contact/data/ultrasecret.net', 'logo' => '', 'accent' => '#0f172a',
     ],
+    'ropo.co' => [
+        'name' => 'ropo.co', 'url' => 'https://ropo.co',
+        'recipient' => 'mail@ropo.co', 'sender' => 'server@ropo.co',
+        'data' => '/var/www/shared/contact/data/ropo.co', 'logo' => '', 'accent' => '#0f172a',
+    ],
     'new.robertpowell.com' => [
         'name' => 'robertpowell.com', 'url' => 'https://new.robertpowell.com',
         'recipient' => 'mail@robertpowell.com', 'sender' => 'server@robertpowell.com',

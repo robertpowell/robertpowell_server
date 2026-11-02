@@ -35,6 +35,7 @@ SITES = [
     ("rpowell.co.uk",           "rpowell.co.uk-access.log",             True),
     ("ultrasecret.net",         "ultrasecret.net-access.log",           True),
     ("highlyconfidential.co.uk","highlyconfidential.co.uk-access.log",  True),
+    ("ropo.co",                 "ropo.co-access.log",                   True),
 ]
 # Machine-only traffic, counted but not detailed: mail servers fetching an
 # MTA-STS policy are not visitors, and the catch-all is pure scanner noise.
@@ -46,6 +47,7 @@ CONTACT_DATA = {
     "rpowell.co.uk":            "/var/www/shared/contact/data/rpowell.co.uk",
     "ultrasecret.net":          "/var/www/shared/contact/data/ultrasecret.net",
     "highlyconfidential.co.uk": "/var/www/highlyconfidential.co.uk/data",
+    "ropo.co":                  "/var/www/shared/contact/data/ropo.co",
 }
 
 # Sites whose pages include track.php (-> MySQL visits.events). Only robertpowell.net until ROP-291
