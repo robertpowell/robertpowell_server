@@ -37,6 +37,11 @@ SITES = [
     ("highlyconfidential.co.uk","highlyconfidential.co.uk-access.log",  True),
     ("ropo.co",                 "ropo.co-access.log",                   True),
 ]
+# Outbound links a site routes through a local redirect so clicks show up in its access log:
+# label -> (path prefix, tile label, {suffix: language}). Only ropo.co has one (the "Looking for Ropo.com?" lines).
+OUTBOUND = {
+    "ropo.co": ("/go/ropo-com", "Ropo.com clicks", {"en": "English", "sv": "Swedish", "fi": "Finnish"}),
+}
 # Machine-only traffic, counted but not detailed: mail servers fetching an
 # MTA-STS policy are not visitors, and the catch-all is pure scanner noise.
 MACHINE_LOG = "other_vhosts_access.log"
@@ -218,6 +223,24 @@ def esc(s):
     return html.escape(str(s or ""))
 
 
+def outbound_clicks(label, rows):
+    """(total, {language: n}) of non-bot clicks on the site's outbound redirect in the last HOURS hours,
+    or None when the site has no such link."""
+    if label not in OUTBOUND:
+        return None
+    prefix, _, langs = OUTBOUND[label]
+    per = {name: 0 for name in langs.values()}
+    total = 0
+    for r in rows:
+        if r["bot"] or not r["path"].startswith(prefix):
+            continue
+        total += 1
+        suffix = r["path"][len(prefix):].strip("/").split("?")[0]
+        if suffix in langs:
+            per[langs[suffix]] += 1
+    return total, per
+
+
 def contacts_sent(label):
     """Messages accepted by the site's contact form in the last HOURS hours."""
     path = os.path.join(CONTACT_DATA.get(label, ""), "submissions.jsonl")
@@ -363,7 +386,7 @@ def banned_section(rows, th):
 
 
 def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, status="", tracked=None,
-                f2b=None, site_ips=frozenset(), gcache=None):
+                f2b=None, site_ips=frozenset(), gcache=None, clicks=None):
     banned_rows = [v for v in vis if v.get("banned")]
     vis = [v for v in vis if not v.get("banned")]
     guests = [v for v in vis if not v.get("known")]
@@ -473,6 +496,7 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
  {stat(len({v["country"] for v in others if v["country"]}), "Countries")}
  {stat(len(banned_rows), "Banned", "#b3261e")}
  {stat(contacts, "Contacts sent", "#15803d" if contacts else FNT)}
+ {stat(clicks[0], OUTBOUND[label][1], "#1d4ed8" if clicks[0] else FNT) if clicks is not None else ""}
  {stat(len(bots), "Bot hits", FNT)}</tr></table></td></tr>
 {status}
 
@@ -930,7 +954,10 @@ def main():
             text += "\n\nBanned by fail2ban:\n" + "\n".join(line(v) for v in vis if v.get("banned"))
         contacts = contacts_sent(label)
         tracked = tracked_visits(label)
-        text = status_text(bk, gt, db, fb, gi, wf) + f"Contacts sent via the form: {contacts}\n\n" + text
+        clicks = outbound_clicks(label, rows)
+        text = status_text(bk, gt, db, fb, gi, wf) + f"Contacts sent via the form: {contacts}\n" + (
+            f"{OUTBOUND[label][1]}: {clicks[0]} ("
+            + ", ".join(f"{k} {v}" for k, v in clicks[1].items()) + ")\n" if clicks is not None else "") + "\n" + text
         text += "\n\n" + fail2ban_text(f2b)
         if tracked is not None:
             text += f"\n\nTracked visits (track.php, 24 h): {len(tracked)}\n" + "\n".join(
@@ -938,7 +965,7 @@ def main():
                 for r in tracked[:20])
         site_ips = {r["ip"] for r in rows}
         send(subject, render_site(label, vis, pages, bots, day, home, ring, contacts, status, tracked,
-                                  f2b, site_ips, gcache), text, sender_for(label))
+                                  f2b, site_ips, gcache, clicks), text, sender_for(label))
         sent += 1
         print(f"  {label}: sent — {len(guests)} visitors, {len(pages)} views, {len(bots)} bot")
 
