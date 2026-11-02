@@ -40,7 +40,7 @@ SITES = [
 # Outbound links a site routes through a local redirect so clicks show up in its access log:
 # label -> (path prefix, tile label, {suffix: language}). Only ropo.co has one (the "Looking for Ropo.com?" lines).
 OUTBOUND = {
-    "ropo.co": ("/go/ropo-com", "Ropo.com clicks", {"en": "English", "sv": "Swedish", "fi": "Finnish"}),
+    "ropo.co": ("/go/ropo-com", "Ropo.com clicks", {"en": "English", "sv": "Swedish", "fi": "Finnish", "no": "Norwegian"}),
 }
 # Machine-only traffic, counted but not detailed: mail servers fetching an
 # MTA-STS policy are not visitors, and the catch-all is pure scanner noise.
