@@ -58,14 +58,15 @@
   <div class="hp" aria-hidden="true"><label for="company">Company</label><input id="company" name="company" tabindex="-1" autocomplete="off"></div>
 
   <div class="f"><label for="name">Your name</label>
-    <input id="name" name="name" required minlength="2" maxlength="120" autocomplete="name"><p class="err" data-for="name"></p></div>
+    <input id="name" name="name" required minlength="2" maxlength="120" pattern="[^&lt;&gt;]*" autocomplete="name"><p class="err" data-for="name"></p></div>
   <div class="f"><label for="email">Your email</label>
     <input id="email" name="email" type="email" required maxlength="254" autocomplete="email" inputmode="email"><p class="err" data-for="email"></p></div>
   <div class="f"><label for="subject">Subject</label>
-    <input id="subject" name="subject" required minlength="2" maxlength="160"><p class="err" data-for="subject"></p></div>
+    <input id="subject" name="subject" required minlength="2" maxlength="160" pattern="[^&lt;&gt;]*"><p class="err" data-for="subject"></p></div>
   <div class="f"><label for="message">Message</label>
     <textarea id="message" name="message" required minlength="10" maxlength="5000"></textarea><p class="err" data-for="message"></p></div>
 
+  <p class="privacy-note">Plain text only: the characters &lt; and &gt; are removed as you type, and formatting or HTML is not accepted.</p>
   <p class="privacy-note">Your IP address, approximate location and browser details are sent with the message. See the <a href="<?= htmlspecialchars($privacy_url, ENT_QUOTES) ?>">privacy policy</a>.</p>
 
   <div class="slide" id="slide" aria-label="Slide to send">

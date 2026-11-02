@@ -158,10 +158,18 @@ function ratelimit(string $ip, bool $record): ?string {
 
 /* ---------- validation ---------- */
 
+/* Every field is plain text. clean() removes what cannot be seen (control characters, zero-width and
+   bidirectional format characters, soft hyphens, BOMs; the zero-width joiner is kept so emoji sequences
+   survive) and normalises line endings. markup() refuses anything that could be read as a tag: the form
+   strips < and > as they are typed, so a submission still carrying them did not come through the form. */
 function clean(string $s, int $max): string {
-    $s = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $s) ?? '');
+    $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]|(?!\x{200D})\p{Cf}/u', '', $s) ?? '';
+    $s = trim(str_replace(["\r\n", "\r"], "\n", $s));
     return mb_substr($s, 0, $max);
 }
+
+function markup(string $s): bool { return preg_match('/[<>]/', $s) === 1; }
+const PLAIN_TEXT_MSG = 'Plain text only, please: the characters < and > are not allowed.';
 
 /** @return array{0: array<string,string>, 1: array<string,string>} [errors, values] */
 function validate(array $post): array {
@@ -184,6 +192,9 @@ function validate(array $post): array {
     }
     if (mb_strlen($v['subject']) < 2)   { $e['subject'] = 'Please give the message a subject.'; }
     if (mb_strlen($v['message']) < 10)  { $e['message'] = 'Please write a little more in the message.'; }
+    foreach (['name', 'email', 'subject', 'message'] as $k) {
+        if (markup($v[$k])) { $e[$k] = PLAIN_TEXT_MSG; }
+    }
     return [$e, $v];
 }
 

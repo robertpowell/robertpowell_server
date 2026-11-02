@@ -67,6 +67,17 @@
     hint.textContent = 'Slide to send';
     if (msg) { status.textContent = msg; status.className = 'status ' + (cls || 'bad'); }
   }
+  /* Plain text only: < and > are removed the moment they are typed or pasted. The server refuses them too. */
+  ['name', 'email', 'subject', 'message'].forEach(function (n) {
+    var el = form.querySelector('[name="' + n + '"]'); if (!el) return;
+    el.addEventListener('input', function () {
+      if (!/[<>]/.test(el.value)) return;
+      var s = el.selectionStart, gone = (el.value.slice(0, s).match(/[<>]/g) || []).length;
+      el.value = el.value.replace(/[<>]/g, '');
+      try { el.setSelectionRange(s - gone, s - gone); } catch (e) { /* type=email has no selection API */ }
+      var p = form.querySelector('.err[data-for="' + n + '"]'); if (p) p.textContent = 'Plain text only: < and > were removed.';
+    });
+  });
   function clearErrors() {
     form.querySelectorAll('.err').forEach(function (e) { e.textContent = ''; });
     status.className = 'status'; status.textContent = '';
@@ -127,7 +138,13 @@
       dpr: window.devicePixelRatio || 1, touch: ('ontouchstart' in window) ? 1 : 0, path: path });
     slide.classList.add('busy');
     fetch('/contact.php', { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
-      .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (r) {
+        return r.json().then(function (j) { return { s: r.status, j: j }; }, function () {
+          /* not JSON: the request never reached the form (web application firewall or server error) */
+          return { s: r.status, j: { error: r.status === 403 ? 'The server refused this message. Plain text only, please.'
+                                                               : 'Something went wrong (HTTP ' + r.status + '). Please try again.' } };
+        });
+      })
       .then(function (res) {
         var j = res.j || {};
         if (j.ok) {
