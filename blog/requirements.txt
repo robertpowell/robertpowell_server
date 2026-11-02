@@ -12,3 +12,6 @@ beautifulsoup4==4.15.0
 soupsieve==2.9.2
 html2text==2025.4.15
 typing_extensions==4.16.0
+nh3==0.3.7
+pymdown-extensions==12.3
+PyYAML==6.0.3

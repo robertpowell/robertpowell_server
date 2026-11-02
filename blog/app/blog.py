@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 import markdown as md
+import nh3
 from flask import (Flask, abort, flash, g, redirect, render_template, request,
                    session, url_for, Response)
 from werkzeug.security import check_password_hash
@@ -88,8 +89,21 @@ def unique_slug(base, post_id=None):
         slug, n = f"{base}-{n}", n + 1
 
 
+# Posts are Markdown. Whatever the Markdown produces is then reduced to the formatting the blog
+# actually uses: paragraphs, bold, italic, strikethrough, links, images, quotes, lists, headings.
+# Every other element and attribute is dropped (text inside it is kept), links may only be http,
+# https or mailto, and raw HTML typed into the editor never reaches a reader (2026-11-02).
+ALLOWED_TAGS = {"p", "br", "strong", "em", "del", "a", "img", "blockquote", "ul", "ol", "li",
+                "h1", "h2", "h3", "h4", "h5", "h6"}
+ALLOWED_ATTRS = {"a": {"href", "title"}, "img": {"src", "alt", "title"}}
+URL_SCHEMES = {"http", "https", "mailto"}
+MD_EXTENSIONS = ["extra", "sane_lists", "nl2br", "pymdownx.tilde"]
+MD_CONFIG = {"pymdownx.tilde": {"subscript": False}}   # ~~strike~~ only, no ~subscript~
+
+
 def render_markdown(text):
-    return md.markdown(text or "", extensions=["extra", "sane_lists", "nl2br"])
+    html = md.markdown(text or "", extensions=MD_EXTENSIONS, extension_configs=MD_CONFIG)
+    return nh3.clean(html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, url_schemes=URL_SCHEMES)
 
 
 def tags_for(post_id):

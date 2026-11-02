@@ -7,7 +7,7 @@
   <label for="title">Title</label>
   <input id="title" name="title" value="{{ post['title'] if post else '' }}" autocomplete="off">
 
-  <label for="body">Body <span class="dim">Markdown</span></label>
+  <label for="body">Body <span class="dim">Markdown: **bold**, *italic*, ~~strike~~, links, images, &gt; quotes, lists, # headings. Anything else is removed.</span></label>
   <textarea id="body" name="body" rows="20" data-upload-url="{{ url_for('upload') }}"
             data-post-id="{{ post['id'] if post else '' }}">{{ post['body'] if post else '' }}</textarea>
   <div class="upl" id="upl">
