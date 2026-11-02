@@ -1,0 +1,54 @@
+/* @license
+ * MyFonts Webfont Build ID 2256197, 2012-04-30T04:33:00-0400
+ * 
+ * The fonts listed in this notice are subject to the End User License
+ * Agreement(s) entered into by the website owner. All other parties are 
+ * explicitly restricted from using the Licensed Webfonts(s).
+ * 
+ * You may obtain a valid license at the URLs below.
+ * 
+ * Webfont: Museo Sans 500 by exljbris
+ * URL: http://www.myfonts.com/fonts/exljbris/museo-sans/500/
+ * Copyright: Copyright (c) 2008 by Jos Buivenga. All rights reserved.
+ * Licensed pageviews: unlimited
+ * 
+ * Webfont: Museo Sans 500 Italic by exljbris
+ * URL: http://www.myfonts.com/fonts/exljbris/museo-sans/500-italic/
+ * Copyright: Copyright (c) 2008 by Jos Buivenga. All rights reserved.
+ * Licensed pageviews: unspecified
+ * 
+ * Webfont: Reklame Script DEMO by HVD Fonts
+ * URL: http://www.myfonts.com/fonts/hvdfonts/reklame-script/demo/
+ * Copyright: Copyright (c) 2010 by Hannes von Doehren. All rights reserved.
+ * Licensed pageviews: unspecified
+ * 
+ * Webfont: Sanchez by Latinotype
+ * URL: http://www.myfonts.com/fonts/latinotype/sanchez/regular/
+ * Copyright: Copyright (c) 2011 by Daniel hern&#x0087;ndez. All rights reserved.
+ * Licensed pageviews: unspecified
+ * 
+ * 
+ * Webfont: Cala Light by Hoftype
+ * URL: http://www.myfonts.com/fonts/hoftype/cala/light/
+ * Copyright: Copyright (c) 2011 by Dieter Hofrichter. All rights reserved.
+ * Licensed pageviews: unlimited
+ * License: http://www.myfonts.com/viewlicense?type=web&buildid=2256197
+ * 
+ * © 2012 Bitstream Inc
+*/
+
+
+
+  
+ @font-face {font-family: 'MuseoSans-500';src: url('webfonts/226D45_0_0.eot');src: url('webfonts/226D45_0_0.eot?#iefix') format('embedded-opentype'),url('webfonts/226D45_0_0.woff') format('woff'),url('webfonts/226D45_0_0.ttf') format('truetype');}
+ 
+  
+ @font-face {font-family: 'MuseoSans-500Italic';src: url('webfonts/226D45_1_0.eot');src: url('webfonts/226D45_1_0.eot?#iefix') format('embedded-opentype'),url('webfonts/226D45_1_0.woff') format('woff'),url('webfonts/226D45_1_0.ttf') format('truetype');}
+ 
+  
+ @font-face {font-family: 'ReklameScript-RegularDEMO';src: url('webfonts/226D45_2_0.eot');src: url('webfonts/226D45_2_0.eot?#iefix') format('embedded-opentype'),url('webfonts/226D45_2_0.woff') format('woff'),url('webfonts/226D45_2_0.ttf') format('truetype');}
+  
+ @font-face {font-family: 'Sanchez-Regular';src: url('webfonts/226D45_3_0.eot');src: url('webfonts/226D45_3_0.eot?#iefix') format('embedded-opentype'),url('webfonts/226D45_3_0.woff') format('woff'),url('webfonts/226D45_3_0.ttf') format('truetype');}
+ 
+ @font-face {font-family: 'Cala-Light';src: url('webfonts/224E7D_0_0.eot');src: url('webfonts/224E7D_0_0.eot?#iefix') format('embedded-opentype'),url('webfonts/224E7D_0_0.woff') format('woff'),url('webfonts/224E7D_0_0.ttf') format('truetype');}
+ 
