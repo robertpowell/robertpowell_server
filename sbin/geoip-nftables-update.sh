@@ -1,6 +1,6 @@
 #!/bin/bash
 # geoip-nftables-update.sh - country-level inbound filter (nftables table inet geoip-filter).
-# Adopted 2026-10-31 from the ropo.uk box (same 35 countries, RP's decision ROP-339).
+# Adopted 2026-10-31 from the ropo.uk box (its 35 countries, RP's decision ROP-339); Poland added here 2026-11-03 (RP: "add poland").
 # Allows: loopback, tailscale0, established/related, ICMP, the whitelist, the allowed countries'
 # IPv4/IPv6 ranges (ipdeny.com) and Apple Private Relay egress ranges for those countries.
 # Everything else inbound is dropped (logged, rate-limited). Runs weekly from /etc/cron.d/geoip-nftables-update;
@@ -9,7 +9,7 @@
 # (their list changes; static copy below is the fallback), and the whitelist is this box's.
 set -euo pipefail
 
-COUNTRIES="gb at be bg hr cy cz dk ee fi fr de gr hu ie it lv lt lu mt nl pt ro sk si es se no is li ch us ca au nz jp"
+COUNTRIES="gb at be bg hr cy cz dk ee fi fr de gr hu ie it lv lt lu mt nl pl pt ro sk si es se no is li ch us ca au nz jp"
 OUTFILE="/etc/nftables.d/geoip-allow.nft"
 TMPDIR=$(mktemp -d /tmp/geoip-nft.XXXXXX)
 trap 'rm -rf "$TMPDIR"' EXIT
