@@ -10,3 +10,7 @@ ExpiresActive Off
 <FilesMatch "\.txt$">
     Require all denied
 </FilesMatch>
+# ?dl=1 (from download.php): send the file as an attachment instead of playing it inline.
+<If "%{QUERY_STRING} == 'dl=1'">
+    Header set Content-Disposition "attachment"
+</If>

@@ -50,5 +50,7 @@
   v.addEventListener('error', function () { send('error'); });
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') send('hide'); });
   window.addEventListener('pagehide', function () { send('close'); });
+  var dl = document.getElementById('dl');
+  if (dl) dl.href = 'download.php?sid=' + encodeURIComponent(sid);
   send('open');
 })();

@@ -56,8 +56,11 @@ def local(t):
     return t.astimezone(TZ).strftime("%a %d %b %H:%M")
 
 
+DOWNLOADS = []   # (ts, ip, geo, device-ish dict) for every Download-button click
+
+
 def sessions():
-    """Fold events into one record per session id."""
+    """Fold events into one record per session id; Download-button clicks go to DOWNLOADS."""
     out = {}
     if not os.path.isfile(EVENTS):
         return out
@@ -70,6 +73,9 @@ def sessions():
             try:
                 t = parse_ts(e["ts"])
             except (KeyError, ValueError):
+                continue
+            if e.get("ev") == "download":
+                DOWNLOADS.append((t, e))
                 continue
             s = out.setdefault(e["sid"], {"first": t, "last": t, "ip": e.get("ip", ""), "file": e.get("file", ""),
                                           "max": 0.0, "played": 0.0, "dur": 0.0, "plays": 0, "seeks": 0,
@@ -204,6 +210,7 @@ def build():
     t_end = sum(1 for s in total if verdict(s)[0] == "Watched to the end")
     t_part = sum(1 for s in total if verdict(s)[0] == "Watched part of it")
     t_ips = len({s["ip"] for s in total})
+    t_dl = len(DOWNLOADS)
     first = min((s["first"] for s in total), default=None)
 
     # html
@@ -233,6 +240,10 @@ def build():
     if silent:
         notes.append(f"{len(silent)} other address{'es' if len(silent) != 1 else ''} fetched the page without running the player script "
                      f"(bots or link previews): {', '.join(silent[:6])}{' …' if len(silent) > 6 else ''}.")
+    clicks = sorted((t, e) for t, e in DOWNLOADS if t >= since)
+    if clicks:
+        notes.append(f"Download button clicked {len(clicks)} time{'s' if len(clicks) != 1 else ''}: "
+                     + "; ".join(f"{esc(local(t))} from {esc(where(e)[0])} ({esc(e.get('ip', ''))}, {esc(device(e))})" for t, e in clicks[:6]) + ".")
     if downloads:
         notes.append(f"The file was downloaded in full {len(downloads)} time{'s' if len(downloads) != 1 else ''} "
                      f"(not via the player): " + ", ".join(f"{esc(local(t))} from {esc(ip)}" for t, ip in downloads[:6]) + ".")
@@ -241,7 +252,7 @@ def build():
     else:
         video_line = "<strong>no video uploaded yet</strong>: the page shows a holding message"
     totals = (f"Since {esc(local(first))}: {len(total)} session{'s' if len(total) != 1 else ''}, {t_end} watched to the end, "
-              f"{t_part} in part, {t_ips} distinct address{'es' if t_ips != 1 else ''}." if first else "No viewing sessions recorded yet.")
+              f"{t_part} in part, {t_dl} download click{'s' if t_dl != 1 else ''}, {t_ips} distinct address{'es' if t_ips != 1 else ''}." if first else "No viewing sessions recorded yet.")
 
     html_body = f"""<!doctype html><html><body style="margin:0;padding:24px;background:#ffffff;color:{INK};font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
 <table cellpadding="0" cellspacing="0" style="max-width:760px;width:100%;border-collapse:collapse">

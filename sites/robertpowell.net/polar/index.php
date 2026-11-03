@@ -36,6 +36,8 @@ $h = fn(?string $s): string => htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUB
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="copyright" content="Copyright Robert Powell 2026">
+<meta name="author" content="Robert Powell">
 <title><?= $h($title !== '' ? $title : 'Video') ?></title>
 <link rel="icon" href="/favicon.ico">
 <style>
@@ -48,6 +50,11 @@ $h = fn(?string $s): string => htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUB
   h1 { font-size: clamp(1.1rem, 2.5vw, 1.5rem); font-weight: 500; letter-spacing: -0.01em; margin: 0 0 1rem; color: #cbd5e1; }
   video { display: block; width: 100%; max-height: 82vh; background: #000; border-radius: 10px; outline: none; }
   p.note { color: #94a3b8; margin: 1rem 0 0; font-size: 0.9rem; }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0.9rem 0 0; }
+  .dl { display: inline-block; padding: 0.55rem 1.1rem; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0;
+        background: #1e293b; text-decoration: none; font-size: 0.95rem; }
+  .dl:hover { background: #334155; }
+  .copy { color: #64748b; font-size: 0.85rem; }
 </style>
 </head>
 <body>
@@ -62,6 +69,7 @@ $h = fn(?string $s): string => htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUB
     <source src="media/<?= $h(rawurlencode($file)) ?>" type="<?= $h($mime) ?>">
     Your browser cannot play this video.
   </video>
+  <div class="bar"><span class="copy">&copy; Robert Powell 2026</span><a class="dl" id="dl" href="download.php" rel="nofollow">Download video</a></div>
   <script src="polar.js"></script>
 <?php endif; ?>
 </main>
