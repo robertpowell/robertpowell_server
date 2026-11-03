@@ -523,6 +523,7 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
 {banned_section(banned_rows, th)}
 
 {fail2ban_box(f2b, label, site_ips, gcache or {}, th) if f2b else ""}
+{countries_box(ban_countries(f2b, lambda ip: (gcache or {}).get(ip, {}).get("country", "")), th) if f2b else ""}
 
 {tracked_box(tracked)}
 
@@ -550,7 +551,7 @@ def fail2ban_data():
     """Jail table + top offenders for the last 24 h. Same three queries the old
     fail2ban-report.sh ran, so the numbers are comparable with its emails."""
     import sqlite3
-    d = {"active": False, "jails": [], "top": [], "tot": (0, 0, 0), "error": ""}
+    d = {"active": False, "jails": [], "top": [], "ban_ips": [], "tot": (0, 0, 0), "error": ""}
     _, act = _run(["systemctl", "is-active", "fail2ban"])
     d["active"] = act == "active"
     rc, out = _run(["/usr/bin/fail2ban-client", "status"], 20)
@@ -578,6 +579,8 @@ def fail2ban_data():
         cur.execute("SELECT ip, COUNT(*) AS n, GROUP_CONCAT(DISTINCT jail) FROM bans "
                     "WHERE timeofban >= ? GROUP BY ip ORDER BY n DESC, ip LIMIT 15", (since,))
         d["top"] = [(ip, int(n), (jl or "").split(",")) for ip, n, jl in cur.fetchall()]
+        cur.execute("SELECT ip, COUNT(*) FROM bans WHERE timeofban >= ? GROUP BY ip", (since,))
+        d["ban_ips"] = [(ip, int(n)) for ip, n in cur.fetchall()]
         con.close()
     except Exception as e:
         d["error"] = str(e)[:120]
@@ -597,6 +600,62 @@ def fail2ban_status(f2b):
     if n < F2B_EXPECTED_JAILS:
         return WARN, f"Active but only {n} of {F2B_EXPECTED_JAILS} jails", detail + "; check jail.local"
     return GOOD, f"Active, {n} jails, {now_b} banned now", detail
+
+
+COUNTRY_ROWS = 10
+
+
+def ban_countries(f2b, country_of):
+    """[(country, bans, distinct IPs)] for every ban in the last 24 h, most bans first.
+    Same rows as the jail table (fail2ban's own database). Unplaceable IPs are "Unknown"."""
+    bans, ips = Counter(), Counter()
+    for ip, n in f2b["ban_ips"]:
+        c = country_of(ip) or "Unknown"
+        bans[c] += n
+        ips[c] += 1
+    return [(c, b, ips[c]) for c, b in sorted(bans.items(), key=lambda x: (-x[1], x[0]))]
+
+
+def countries_text(rows):
+    if not rows:
+        return ""
+    out = [f"Top countries of bans, last 24 h (country  bans  IPs), {len(rows)} countries:"]
+    out += [f"  {c[:24]:<24} {b:>5} {n:>5}" for c, b, n in rows[:COUNTRY_ROWS]]
+    rest = rows[COUNTRY_ROWS:]
+    if rest:
+        out.append(f"  {'%d other countries' % len(rest):<24} {sum(r[1] for r in rest):>5} {sum(r[2] for r in rest):>5}")
+    return "\n".join(out) + "\n"
+
+
+def countries_box(rows, th):
+    if not rows:
+        return ""
+    tdc = (f'padding:7px 12px;border-bottom:1px solid {RULE};font:13px -apple-system,Segoe UI,Arial,'
+           f'sans-serif;color:{INK};vertical-align:middle')
+    num = f'{tdc};font:600 13px ui-monospace,monospace;text-align:right'
+    top_n = rows[0][1] or 1
+
+    def bar(b):
+        w = max(2, int(b * 100 / top_n))
+        return (f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{RULE};height:5px;'
+                f'border-radius:3px"><tr><td width="{w}%" style="background:#b3261e;height:5px;border-radius:3px;'
+                f'font-size:0;line-height:0">&nbsp;</td><td style="font-size:0;line-height:0">&nbsp;</td></tr></table>')
+    body = "".join(
+        f'<tr><td style="{tdc}">{esc(c)}</td><td style="{tdc};width:38%">{bar(b)}</td>'
+        f'<td style="{num};color:{A}">{b}</td><td style="{num};color:{MUT}">{n}</td></tr>'
+        for c, b, n in rows[:COUNTRY_ROWS])
+    rest = rows[COUNTRY_ROWS:]
+    if rest:
+        body += (f'<tr style="background:{BG}"><td style="{tdc};color:{MUT}">{len(rest)} other countries</td>'
+                 f'<td style="{tdc}"></td><td style="{num};color:{MUT}">{sum(r[1] for r in rest)}</td>'
+                 f'<td style="{num};color:{MUT}">{sum(r[2] for r in rest)}</td></tr>')
+    return (f'<tr><td style="padding-top:16px"><div style="font:600 11px/1 ui-monospace,monospace;letter-spacing:.09em;'
+            f'text-transform:uppercase;color:{FNT};padding-bottom:8px">Top countries of bans &middot; '
+            f'{len(rows)} countr{"y" if len(rows) == 1 else "ies"} &middot; last 24 h</div>'
+            f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
+            f'border-collapse:collapse"><tr style="background:{BG}"><th align="left" style="{th}">Country</th>'
+            f'<th style="{th}"></th><th align="right" style="{th}">Bans</th><th align="right" style="{th}">IPs</th></tr>'
+            f'{body}</table></td></tr>')
 
 
 def fail2ban_text(f2b):
@@ -927,7 +986,8 @@ def main():
     f2b = fail2ban_data()
     fb = fail2ban_status(f2b)
     gi, wf = geoip_status(), waf_status()
-    geo([ip for ip, _, _ in f2b["top"]], gcache)   # same cache + batch call as the visitor rows
+    # every IP banned in 24 h, for the top-countries table (about 230 a day = 3 batch calls)
+    geo(sorted({ip for ip, _ in f2b["ban_ips"]} | {ip for ip, _, _ in f2b["top"]}), gcache)
     status = status_html(bk, gt, db, fb, gi, wf)
     day = datetime.now().strftime("%A %-d %B %Y")
     tag = "[TEST] " if os.environ.get("REPORT_TEST") else ""
@@ -958,7 +1018,8 @@ def main():
         text = status_text(bk, gt, db, fb, gi, wf) + f"Contacts sent via the form: {contacts}\n" + (
             f"{OUTBOUND[label][1]}: {clicks[0]} ("
             + ", ".join(f"{k} {v}" for k, v in clicks[1].items()) + ")\n" if clicks is not None else "") + "\n" + text
-        text += "\n\n" + fail2ban_text(f2b)
+        text += "\n\n" + fail2ban_text(f2b) + "\n" + countries_text(
+            ban_countries(f2b, lambda ip: gcache.get(ip, {}).get("country", "")))
         if tracked is not None:
             text += f"\n\nTracked visits (track.php, 24 h): {len(tracked)}\n" + "\n".join(
                 f"{r['when']}  {r['ip']:<16} {(r['city'] or r['country'] or '?'):<16} {r['page']}"
