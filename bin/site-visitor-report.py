@@ -1,23 +1,28 @@
-#!/opt/ropo-blog/venv/bin/python
+#!/usr/bin/python3 -I
 """Daily visitor report across every vhost on this server.
 
 One email, a section per site. No cookies, no tracking pixel, no JavaScript -
-this reads Apache access logs and nothing else.
+this reads Apache access logs and nothing else. Visitor addresses are placed with the
+MaxMind GeoLite2 City + ASN databases and Apple's Private Relay ranges held on this box
+(/var/lib/site-visitor-report/geo, refreshed weekly by site-report-geodata, ROP-341); no
+address is ever sent to a third party.
 """
 import email.utils
-import html, json, os, re, subprocess, sys, urllib.parse, urllib.request
-from collections import Counter
+import html, ipaddress, json, os, re, subprocess, sys, urllib.parse, urllib.request
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from math import asin, cos, log10, radians, sin, sqrt
+
+import maxminddb
 
 LOGDIR = "/var/log/apache2"
 TO = "mail@robertpowell.com"
 FROM_USER = "server"           # every report is sent from server@<the site it is about>
 # No per-site fallback: a report must only ever come from its own domain.
 SENDER_OVERRIDE = {}
-GEO_CACHE = "/opt/ropo-blog/reports/geo-cache.json"
+GEO_DIR = "/var/lib/site-visitor-report/geo"
 PC_CACHE = "/opt/ropo-blog/reports/postcode-cache.json"
 LEARNED = "/opt/ropo-blog/data/known-ips.json"
 HOURS, NEAR_KM, LEARNED_MAX_AGE_DAYS = 24, 25, 120
@@ -137,21 +142,102 @@ def banned():
         return set()
 
 
-def geo(ips, cache):
-    todo = [i for i in ips if i not in cache]
-    for n in range(0, len(todo), 100):
-        body = json.dumps([{"query": i} for i in todo[n:n + 100]]).encode()
-        req = urllib.request.Request(
-            "http://ip-api.com/batch?fields=status,query,country,countryCode,"
-            "regionName,city,zip,lat,lon,isp,mobile,proxy,hosting",
-            data=body, headers={"Content-Type": "application/json"})
+# Network names that are datacentres, not people: the "hosting" badge. Matched on the
+# GeoLite2-ASN organisation, so it is a best guess (same list as ropo.uk's report).
+HOSTING = re.compile(
+    r'amazon|aws|google|microsoft|azure|digitalocean|ovh|hetzner|linode|akamai|vultr|choopa|'
+    r'constant company|contabo|scaleway|online s\.?a\.?s|alibaba|tencent|huawei cloud|oracle|'
+    r'm247|leaseweb|hostinger|ionos|datacamp|cdn77|cloudflare|fastly|g-core|gcore|colocrossing|'
+    r'quadranet|servers\.com|selectel|timeweb|aeza|pfcloud|stark industries|hostkey|worldstream|'
+    r'netcup|ipxo|zenlayer|interserver|frantech|buyvm|dedipath|serverion|nforce|i3d|limestone|'
+    r'webnx|kamatera|upcloud|hivelocity|psychz|tzulo|hostroyale|ucloud|bytedance|byteplus|'
+    r'cyber ?assets|internet utilities|global connectivity solutions|techoff|unmanaged ltd|'
+    r'flyservers|hosting|datacenter|data center|cloud|vps|server', re.I)
+
+
+class Geo(dict):
+    """ip -> {city zip country countryCode lat lon isp proxy hosting}, looked up on first use from
+    the local databases (same shape the old ip-api.com cache had, so the rest of the report is
+    unchanged). .problems lists anything missing or stale for the status strip."""
+
+    def __init__(self):
+        super().__init__()
+        now = datetime.now(timezone.utc)
+        self.problems, self.ages = [], {}
+        self.city = self._open("GeoLite2-City.mmdb", now)
+        self.asn = self._open("GeoLite2-ASN.mmdb", now)
+        self.relay = defaultdict(set)   # (version, prefixlen) -> {network int}
+        p = os.path.join(GEO_DIR, "apple-private-relay.csv")
         try:
-            with urllib.request.urlopen(req, timeout=25) as r:
-                for row in json.load(r):
-                    cache[row.get("query", "")] = row
-        except Exception as e:
-            print(f"geo failed: {e}", file=sys.stderr)
-            break
+            for ln in open(p):
+                try:
+                    n = ipaddress.ip_network(ln.split(",", 1)[0].strip(), strict=False)
+                except ValueError:
+                    continue
+                self.relay[(n.version, n.prefixlen)].add(int(n.network_address))
+            self.ages["relay"] = (now - datetime.fromtimestamp(os.path.getmtime(p), timezone.utc)).days
+        except OSError:
+            self.problems.append("Apple Private Relay ranges missing, so no proxy badges")
+
+    def _open(self, name, now):
+        p = os.path.join(GEO_DIR, name)
+        try:
+            age = (now - datetime.fromtimestamp(os.path.getmtime(p), timezone.utc)).days
+            self.ages[name] = age
+            if age > 21:
+                self.problems.append(f"{name} is {age} days old; the weekly site-report-geodata run is failing")
+            return maxminddb.open_database(p)
+        except Exception:
+            self.problems.append(f"{name} missing; run site-report-geodata")
+            return None
+
+    def _is_relay(self, ip):
+        try:
+            a = ipaddress.ip_address(ip)
+        except ValueError:
+            return False
+        bits = 32 if a.version == 4 else 128
+        n = int(a)
+        for (ver, plen), nets in self.relay.items():
+            if ver == a.version and (n >> (bits - plen) << (bits - plen)) in nets:
+                return True
+        return False
+
+    def get(self, ip, default=None):
+        if ip in self:
+            return self[ip]
+        g = {"city": "", "zip": "", "country": "", "countryCode": "", "lat": None, "lon": None,
+             "isp": "", "proxy": False, "hosting": False}
+        try:
+            c = self.city.get(ip) if self.city else None
+        except ValueError:
+            c = None
+        if c:
+            g["city"] = (c.get("city") or {}).get("names", {}).get("en", "")
+            g["zip"] = (c.get("postal") or {}).get("code", "")
+            g["country"] = (c.get("country") or {}).get("names", {}).get("en", "")
+            g["countryCode"] = (c.get("country") or {}).get("iso_code", "")
+            loc = c.get("location") or {}
+            # Without a city, GeoLite2's point is the country's centre (the UK's is in London,
+            # 56 km from GU9), and accuracy_radius says so (200-1000 km). Don't call that a distance.
+            if g["city"] and (loc.get("accuracy_radius") or 9999) <= 100:
+                g["lat"], g["lon"] = loc.get("latitude"), loc.get("longitude")
+        try:
+            a = self.asn.get(ip) if self.asn else None
+        except ValueError:
+            a = None
+        if a:
+            g["isp"] = a.get("autonomous_system_organization", "") or ""
+        g["proxy"] = self._is_relay(ip)
+        g["hosting"] = bool(g["isp"]) and not g["proxy"] and bool(HOSTING.search(g["isp"]))
+        self[ip] = g
+        return g
+
+
+def geo(ips, cache):
+    """Kept for the call sites: every lookup is local now, so this only warms the cache."""
+    for ip in ips:
+        cache.get(ip)
     return cache
 
 
@@ -290,7 +376,7 @@ def visitors_for(rows, gcache, pcc, home, known, bans=frozenset()):
              "city": g.get("city", ""), "zip": g.get("zip", ""),
              "country": g.get("country", ""), "cc": g.get("countryCode", ""),
              "isp": g.get("isp", ""), "lat": g.get("lat"), "lon": g.get("lon"),
-             "flags": [k for k in ("mobile", "proxy", "hosting") if g.get(k)],
+             "flags": [k for k in ("proxy", "hosting") if g.get(k)],
              "known": known.get(ip, ""), "banned": ip in bans}
         oc = ""
         m = re.match(r"^([A-Z]{1,2}\d{1,2}[A-Z]?)", (v["zip"] or "").upper())
@@ -964,7 +1050,7 @@ def send(subject, html_body, text_body, sender):
 def main():
     global KNOWN_IPS
     KNOWN_IPS = {**KNOWN_IPS, **learned()}
-    gcache, pcc = jload(GEO_CACHE), jload(PC_CACHE)
+    gcache, pcc = Geo(), jload(PC_CACHE)
     home = outcode(HOME_OUTCODE, pcc)
     watch = outcode(WATCH_OUTCODE, pcc)
     ring = set()
@@ -986,6 +1072,11 @@ def main():
     f2b = fail2ban_data()
     fb = fail2ban_status(f2b)
     gi, wf = geoip_status(), waf_status()
+    # The report's own geodata (City/ASN/Private Relay files) shares the GeoIP row.
+    if gcache.problems:
+        gi = (WARN if gi[0] == GOOD else gi[0], gi[1], gi[2] + "; report geodata: " + "; ".join(gcache.problems))
+    else:
+        gi = (gi[0], gi[1], gi[2] + f"; report geodata {gcache.ages.get('GeoLite2-City.mmdb', '?')} d old")
     # every IP banned in 24 h, for the top-countries table (about 230 a day = 3 batch calls)
     geo(sorted({ip for ip, _ in f2b["ban_ips"]} | {ip for ip, _, _ in f2b["top"]}), gcache)
     status = status_html(bk, gt, db, fb, gi, wf)
@@ -1030,7 +1121,7 @@ def main():
         sent += 1
         print(f"  {label}: sent — {len(guests)} visitors, {len(pages)} views, {len(bots)} bot")
 
-    jsave(GEO_CACHE, gcache); jsave(PC_CACHE, pcc)
+    jsave(PC_CACHE, pcc)
     print(f"{sent} email(s) sent")
 
 

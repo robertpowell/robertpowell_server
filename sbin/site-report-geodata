@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# Geodata for the daily site reports (/usr/local/bin/site-visitor-report.py, ROP-341; copied from ropo.uk, ROP-336).
+#
+#   GeoLite2-City  -> city, UK postcode district, lat/lon  (distance from home)
+#   GeoLite2-ASN   -> network name; datacentre networks get the "hosting" badge
+#   Apple iCloud Private Relay egress ranges -> the "proxy" badge
+#
+# Everything is looked up on this box: visitor IPs are never sent to a third party
+# (until ROP-341 this box sent them to ip-api.com over plain HTTP; it no longer does).
+#
+# Root-owned, world-readable: the contact form (www-data) reads the City file too.
+# Same MaxMind licence key as ropo.uk (RP, 2026-11-03).
+#
+# Key      : /etc/geoip-update.env (MAXMIND_LICENSE_KEY, root 600) - never printed
+# Output   : /var/lib/site-visitor-report/geo/  (root 755, files 644)
+# Schedule : /etc/cron.d/site-visitor-report (weekly)
+# Log      : /var/log/site-visitor-report.log
+#
+# Each file is replaced only after it downloads, verifies and opens; a failure keeps
+# the previous copy, and the report shows the age of what it used.
+#
+set -uo pipefail
+
+ENV_FILE="/etc/geoip-update.env"
+DEST="/var/lib/site-visitor-report/geo"
+EDITIONS="GeoLite2-City GeoLite2-ASN"
+APPLE_URL="https://mask-api.icloud.com/egress-ip-ranges.csv"
+
+log() { echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] geodata: $*"; }
+
+# shellcheck disable=SC1090
+[ -r "$ENV_FILE" ] && . "$ENV_FILE"
+KEY="${MAXMIND_LICENSE_KEY:-}"
+
+install -d -o root -g root -m 755 "$DEST"
+WORK="$(mktemp -d /tmp/site-geodata.XXXXXX)" || { log "ERROR mktemp failed"; exit 1; }
+trap 'rm -rf "$WORK"' EXIT
+rc=0
+
+if [ -z "$KEY" ]; then
+    log "ERROR MAXMIND_LICENSE_KEY not set in $ENV_FILE; keeping the current databases"
+    rc=1
+else
+    for ED in $EDITIONS; do
+        BASE="https://download.maxmind.com/app/geoip_download?edition_id=${ED}&license_key=${KEY}"
+        if ! curl -fsSL --max-time 300 "${BASE}&suffix=tar.gz" -o "$WORK/$ED.tar.gz" \
+           || ! curl -fsSL --max-time 60 "${BASE}&suffix=tar.gz.sha256" -o "$WORK/$ED.sha256"; then
+            log "ERROR $ED: download failed; keeping the current copy"; rc=1; continue
+        fi
+        want="$(awk '{print $1}' "$WORK/$ED.sha256")"
+        got="$(sha256sum "$WORK/$ED.tar.gz" | awk '{print $1}')"
+        if [ -z "$want" ] || [ "$want" != "$got" ]; then
+            log "ERROR $ED: checksum mismatch; keeping the current copy"; rc=1; continue
+        fi
+        tar -xzf "$WORK/$ED.tar.gz" -C "$WORK" --no-same-owner --no-same-permissions
+        mmdb="$(find "$WORK" -name "$ED.mmdb" -type f | head -1)"
+        if [ -z "$mmdb" ] || ! /usr/bin/python3 -I -c \
+            "import maxminddb,sys; r=maxminddb.open_database(sys.argv[1]); r.get('8.8.8.8'); print(r.metadata().build_epoch)" \
+            "$mmdb" >/dev/null 2>&1; then
+            log "ERROR $ED: database will not open; keeping the current copy"; rc=1; continue
+        fi
+        install -o root -g root -m 644 "$mmdb" "$DEST/.$ED.mmdb.new" && mv -f "$DEST/.$ED.mmdb.new" "$DEST/$ED.mmdb"
+        log "$ED installed"
+    done
+fi
+
+if curl -fsSL --max-time 120 "$APPLE_URL" -o "$WORK/apple.csv" \
+   && [ "$(grep -c ',' "$WORK/apple.csv")" -gt 1000 ]; then
+    install -o root -g root -m 644 "$WORK/apple.csv" "$DEST/.apple-private-relay.csv.new" \
+        && mv -f "$DEST/.apple-private-relay.csv.new" "$DEST/apple-private-relay.csv"
+    log "Apple Private Relay ranges installed ($(wc -l < "$DEST/apple-private-relay.csv") lines)"
+else
+    log "ERROR Apple Private Relay download failed or too short; keeping the current copy"; rc=1
+fi
+
+exit $rc

@@ -1,0 +1,6 @@
+# Geodata for the daily site reports (ROP-341): MaxMind GeoLite2 City + ASN and Apple Private Relay
+# ranges into /var/lib/site-visitor-report/geo/. Weekly, Wednesdays; MaxMind publishes Tue and Fri.
+# Key in /etc/geoip-update.env (root 600). A failed download keeps the previous copy.
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+47 3 * * 3 root /usr/local/sbin/site-report-geodata >> /var/log/site-visitor-report.log 2>&1

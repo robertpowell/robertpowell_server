@@ -209,11 +209,10 @@ function geo(string $ip): array {
     if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
         return ['note' => 'private or local address'];
     }
-    $ctx = stream_context_create(['http' => ['timeout' => 4, 'ignore_errors' => true]]);
-    $raw = @file_get_contents('http://ip-api.com/json/' . rawurlencode($ip)
-        . '?fields=status,country,countryCode,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting', false, $ctx);
-    $g = $raw ? json_decode($raw, true) : null;
-    return (is_array($g) && ($g['status'] ?? '') === 'success') ? $g : ['note' => 'lookup unavailable'];
+    /* Looked up on this box (geo-local.php, ROP-341): the address is never sent to a third party. */
+    require_once __DIR__ . '/geo-local.php';
+    $g = \GeoLocal\lookup($ip);
+    return ($g['status'] ?? '') === 'success' ? $g : ['note' => 'lookup unavailable'];
 }
 
 function flag(string $cc): string {

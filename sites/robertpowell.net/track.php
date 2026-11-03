@@ -1,7 +1,8 @@
 <?php
 /**
  * Visitor tracking script
- * Uses Matomo Device Detector for user agent parsing and ip-api.com for geolocation
+ * Uses Matomo Device Detector for user agent parsing and the GeoLite2 databases on this box
+ * for geolocation (ROP-341; was ip-api.com). Nothing about the visitor leaves the server.
  */
 
 // Load Composer autoloader for Device Detector
@@ -34,13 +35,10 @@ $pagevisited = $_SERVER['PHP_SELF'] ?? '';
 $remoteaddr = $_SERVER['REMOTE_ADDR'] ?? '';
 $requestmethod = $_SERVER['REQUEST_METHOD'] ?? '';
 
-// IP geolocation lookup
-$ip_ch = curl_init('http://ip-api.com/json/' . urlencode($remoteaddr) . '?fields=status,countryCode,city,zip');
-curl_setopt($ip_ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ip_ch, CURLOPT_TIMEOUT, 3);
-$ipjson = curl_exec($ip_ch);
-
-$ipapi_result = json_decode($ipjson, true);
+// IP geolocation lookup, local (shared/contact/geo-local.php). No Private Relay scan here:
+// this runs on every page view and only needs country, city and postcode.
+require_once '/var/www/shared/contact/geo-local.php';
+$ipapi_result = \GeoLocal\lookup($remoteaddr, false);
 
 // Safely extract geolocation data
 $countryCode = $ipapi_result['countryCode'] ?? '';

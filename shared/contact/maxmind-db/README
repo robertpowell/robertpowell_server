@@ -1,0 +1,1 @@
+MaxMind-DB-Reader-php v1.12.1 (pure PHP), from https://github.com/maxmind/MaxMind-DB-Reader-php, tarball sha256 ba53f74a61d77a20874eb00369d0493440f412dff5afd55410f5728f0cf46c10. Only the src/MaxMind/Db tree is vendored. Loaded by geo-local.php (ROP-341).

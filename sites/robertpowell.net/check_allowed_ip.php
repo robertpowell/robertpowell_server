@@ -58,9 +58,9 @@ function checkAllowedIP($ip) {
     // Try to get country code
     $countryCode = getIPCountryCode($ip);
 
-    // FAIL OPEN: a null/empty result means the ip-api lookup itself failed
-    // (timeout, rate limit, DNS/network error, malformed JSON) -- NOT that the
-    // visitor is from a disallowed country. Denying here turned every ip-api
+    // FAIL OPEN: a null/empty result means the lookup itself failed (database
+    // missing or unreadable, address unknown to it) -- NOT that the visitor is
+    // from a disallowed country. Denying here once turned every lookup
     // outage into a site-wide 403 that monitoring could not see, because the
     // updown.io probe IPs are hard-whitelisted above and never reach this code.
     // Allow the visitor through and log it. Deliberately NOT cached, so a
@@ -134,35 +134,15 @@ function isCountryAllowed($countryCode) {
 }
 
 /**
- * Get country code from ip-api.com
+ * Get country code from the GeoLite2 database on this box (ROP-341; was ip-api.com).
+ * The visitor's address is never sent anywhere.
  *
  * @param string $ip The IP address
- * @return string|null Country code or null
+ * @return string|null Country code, '' when the address is not in the database, null when the database is unusable
  */
 function getIPCountryCode($ip) {
-    try {
-        $url = "http://ip-api.com/json/{$ip}?fields=status,countryCode";
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        if ($httpCode === 200 && $response) {
-            $data = json_decode($response, true);
-            if ($data && isset($data['status']) && $data['status'] === 'success') {
-                return $data['countryCode'] ?? null;
-            }
-        }
-    } catch (Exception $e) {
-        error_log("IP lookup failed: " . $e->getMessage());
-    }
-
-    return null;
+    require_once '/var/www/shared/contact/geo-local.php';
+    return \GeoLocal\country($ip);
 }
 
 /**
