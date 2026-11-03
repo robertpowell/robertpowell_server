@@ -1,0 +1,12 @@
+# /polar/: unlisted video page (2026-11-03). Everything in this folder stays out of search engines,
+# the video is served only to a browser that was given the address, and nothing here is cached by proxies.
+Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+Options -Indexes
+ExpiresActive Off
+<FilesMatch "\.(mp4|m4v|webm|mov)$">
+    Header set Cache-Control "private, max-age=3600"
+    Header unset Expires
+</FilesMatch>
+<FilesMatch "\.txt$">
+    Require all denied
+</FilesMatch>

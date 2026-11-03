@@ -1,0 +1,5 @@
+# Daily: has the unlisted video at robertpowell.net/polar/ been watched (and to the end)? Added 2026-11-03.
+# Follows the 08:00 site reports. Events come from /var/www/html/polar/beacon.php -> /var/lib/polar-video/events.jsonl.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+5 8 * * * root /usr/local/bin/polar-video-report.py >> /var/log/polar-video-report.log 2>&1

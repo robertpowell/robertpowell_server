@@ -3,7 +3,7 @@
 # Used by pull-live.sh (live -> repo) and deploy.sh (repo -> live). Lines starting with # are ignored.
 # Secrets and data never appear here: they are excluded below and ignored by git; restic backs them up.
 
-sites/robertpowell.net            | /var/www/html                                  | root:root          | 755 | 644 | cache/,CLAUDE.md
+sites/robertpowell.net            | /var/www/html                                  | root:root          | 755 | 644 | cache/,CLAUDE.md,polar/media/
 sites/highlyconfidential.co.uk    | /var/www/highlyconfidential.co.uk              | root:root          | 755 | 644 | data/
 sites/highlyconfidential.co.uk/lib| /var/www/highlyconfidential.co.uk/lib          | root:www-data      | 750 | 640 |
 sites/rpowell.co.uk               | /var/www/rpowell.co.uk                         | root:root          | 755 | 644 |
