@@ -36,3 +36,8 @@ Header set Content-Security-Policy "default-src 'self'; frame-ancestors 'none'; 
 #Header always set Referrer-Policy "same-origin"
 # Header always set Feature-Policy "fullscreen 'none'; microphone 'none'"
 #Header set Permissions-Policy "geolocation=(self 'https://ultrasecret.net'), microphone=()"
+# Public key file on the front page (2026-11-04)
+AddType application/pgp-keys .asc
+<Files "ultrasecret-net.asc">
+    Header set Content-Disposition "attachment; filename=ultrasecret-net.asc"
+</Files>

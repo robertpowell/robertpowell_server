@@ -1,11 +1,95 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-<title>Welcome to ultrasecret.net!</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ultrasecret.net - send Robert Powell a file securely">
+<title>ultrasecret.net</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f8fafc; --fg: #0f172a; --muted: #64748b; --line: #cbd5e1; --accent: #0f172a; --card: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0b1120; --fg: #e2e8f0; --muted: #94a3b8; --line: #1e293b; --accent: #e2e8f0; --card: #0f172a; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: grid; place-items: center; padding: 2rem;
+  }
+  main { max-width: 38rem; text-align: center; }
+  .mark { width: 64px; height: 64px; margin: 0 auto 1.5rem; display: block; border-radius: 14px; }
+  h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 600; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+  h1 .tld { color: var(--muted); font-weight: 500; }
+  h2 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.75rem; }
+  p { color: var(--muted); margin: 0.5rem 0 0; }
+  hr { border: 0; border-top: 1px solid var(--line); width: 4rem; margin: 1.75rem auto; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.4rem 1.6rem; text-align: left; margin: 0 auto; }
+  .card h2 { margin-top: 0; }
+  .card > p { margin: 0.75rem 0 0; }
+  .steps { margin: 0; padding: 0 0 0 1.4rem; color: var(--fg); }
+  .steps li { margin: 0.4rem 0; }
+  .steps a, main a { color: var(--fg); }
+  code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.05rem 0.35rem; }
+  .fpr { font: 0.85rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.04em; color: var(--muted); margin-top: 1rem; word-break: break-all; text-align: left; }
+  details { margin-top: 1rem; text-align: left; }
+  summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+  pre { font: 0.72rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1rem; margin: 0.75rem 0 0; overflow-x: auto; white-space: pre; color: var(--fg); }
+  footer { font-size: 0.8rem; color: var(--muted); }
+  footer a { color: var(--muted); }
+  .links { margin: 0 0 0.75rem; }
+  .links a { color: var(--fg); text-decoration: none; font-weight: 500; margin: 0 0.6rem; }
+  .links a:hover { text-decoration: underline; }
+</style>
 </head>
 <body>
-<h1>ultrasecret.net</h1>
-<p>F@ZS_is_PjA#zMLK#9EYL%=_RF#":QLo=Vm>C=Tt%^I{&xDO2[|aF&](_([\d]4/CmZ#SkX^.26N1}rtI5wgNMLO25LW[S<+HFj:6)nJ."lPivCWAU7)Z6XlZ1,*kW#pRBq&tgk>%2I}&k2-#N5%_?l%D{6Boh{p0\jL_V){D1Y|ZFvhB!T::B~t8gCx_dEvM(J64qgl[KyA.9Gm(Mt1jM(97$v]M(3U!Sz=C&Q:}+*jiIo@DjNwtf0GUP4(A5=</p>
-<p><a href="/contact.php">Contact</a> &middot; <a href="/privacy.php">Privacy</a></p>
+<main>
+  <picture>
+    <source srcset="/logo-mark-light.svg" media="(prefers-color-scheme: dark)">
+    <img class="mark" src="/logo-mark.svg" alt="" width="64" height="64">
+  </picture>
+  <h1>ultrasecret<span class="tld">.net</span></h1>
+  <p>Send me a file that only I can read.</p>
+  <hr>
+  <section class="card">
+  <h2>How to send a file securely</h2>
+  <ol class="steps">
+    <li>Download my public key: <a href="/ultrasecret-net.asc" download>ultrasecret-net.asc</a></li>
+    <li>Encrypt the file with it using any OpenPGP tool (GPG Suite on a Mac, Gpg4win / Kleopatra on Windows, or <code>gpg --encrypt --recipient 2F7CD7E2A26A6E37CF17397DBBE40A59A1066DA8 FILE</code>).</li>
+    <li>Email the encrypted file to the address in the key, or get in touch through the <a href="/contact.php">contact page</a> if you need another route.</li>
+  </ol>
+  <p class="fpr">Fingerprint: 2F7C D7E2 A26A 6E37 CF17 397D BBE4 0A59 A106 6DA8</p>
+  <p>Check the fingerprint with me over another channel before trusting the key. Nothing you encrypt with it can be read by anyone else, including this website.</p>
+  <details>
+    <summary>Show the public key</summary>
+    <pre>-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEautYpBYJKwYBBAHaRw8BAQdADFkVlyl/YWnXYO6bjrurF/6Si4MWLyNa4DdR
+RIn86OK0JVJvYmVydCBQb3dlbGwgPG1haWxAcm9iZXJ0cG93ZWxsLmNvbT6IlQQT
+FgoAPhYhBC981+Kiam43zxc5fbvkClmhBm2oBQJq61ikAhsBBQkFo5qABQsJCAcC
+BhUKCQgLAgQWAgMBAh4BAheAAAoJELvkClmhBm2ovqcA+LYW5/y/GgeVZwpWydlF
+zZsbv74R/6j925JWoE8xlgEA/1d0OabvBx+iVVBfwnjKRhv03PqeiywPG0fFMxEF
+C3YJuDgEautYphIKKwYBBAGXVQEFAQEHQGoNhiiPP5ej5QoKR/p+Ye3i4ttbUYde
+VfaA4AKyL9FbAwEIB4h+BBgWCgAmFiEEL3zX4qJqbjfPFzl9u+QKWaEGbagFAmrr
+WKYCGwwFCQWjmoAACgkQu+QKWaEGbaiD0QD/a02FVQfstysWhcjlDclLgcaE53t3
+n6xCUBCGB2v9na4BAI4yJoee8ALfa8m24Nn1Uhb1jDbFf9oZ85Y6omT750IAuDME
+autYpxYJKwYBBAHaRw8BAQdAPiX1MTNjVI9cP4ba7O3ELx+PL6WxZWfLV5PG5IoI
+yEuI9QQYFgoAJhYhBC981+Kiam43zxc5fbvkClmhBm2oBQJq61inAhsCBQkFo5qA
+AIEJELvkClmhBm2odiAEGRYKAB0WIQQEIU86Uy6b6FHrPICfPCFF6PZ5hwUCautY
+pwAKCRCfPCFF6PZ5hzOoAP9eMNZKamX3xGh7K28J7fP6Jxcn2CjN75Y+idYJrTEt
+nAD/RjF0pHwaU7AS4X9O2jlBuiWzVcQ0PnDR7NntmNG4oAY3sQEA4Cu089y1q6MP
+RM98cxUfyS45muSouFPqithm+i+NBYkBAOiTkyfDIX/iPVmH3HV0h8YZaxTo+iP5
+Hbi38drCL+wI
+=FhFL
+-----END PGP PUBLIC KEY BLOCK-----</pre>
+  </details>
+  </section>
+  <hr>
+  <footer><div class="links"><a href="/contact.php">Contact</a> &middot; <a href="/privacy.php">Privacy</a></div>&copy; 2026 ultrasecret.net</footer>
+</main>
 </body>
 </html>

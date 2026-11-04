@@ -11,3 +11,4 @@
 /mnt/ropo_volume/robertpowell-migration/extract
 __pycache__
 *.pyc
+/root/ultrasecret-pgp
