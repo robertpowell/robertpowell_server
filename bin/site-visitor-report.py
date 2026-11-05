@@ -890,10 +890,15 @@ def git_status():
     dirty_n = len(dirty.splitlines())
     ahead, behind = int(ahead or 0), int(behind or 0)
     probs = []
+    def names(lines):  # first few entries so the email says WHICH files, not just how many
+        lines = [ln.strip() for ln in lines if ln.strip()]
+        return ": " + ", ".join(lines[:5]) + (f" (+{len(lines) - 5} more)" if len(lines) > 5 else "")
     if drift_n:
-        probs.append(f"{drift_n} live file{'s' if drift_n != 1 else ''} differ{'s' if drift_n == 1 else ''} from the checkout (run pull-live.sh and commit)")
+        probs.append(f"{drift_n} live file{'s' if drift_n != 1 else ''} differ{'s' if drift_n == 1 else ''} from the checkout"
+                     + names(ln for ln in drift.splitlines() if "/" in ln and not ln.startswith(("Nothing", "(dry")))
+                     + " (run pull-live.sh and commit)")
     if dirty_n:
-        probs.append(f"{dirty_n} uncommitted change{'s' if dirty_n != 1 else ''} in the checkout")
+        probs.append(f"{dirty_n} uncommitted change{'s' if dirty_n != 1 else ''} in the checkout" + names(dirty.splitlines()))
     if ahead:
         probs.append(f"{ahead} commit{'s' if ahead != 1 else ''} not pushed")
     if behind:
