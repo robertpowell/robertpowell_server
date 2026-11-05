@@ -40,14 +40,12 @@ SITES = [
     ("rpowell.co.uk",           "rpowell.co.uk-access.log",             True),
     ("ultrasecret.net",         "ultrasecret.net-access.log",           True),
     ("highlyconfidential.co.uk","highlyconfidential.co.uk-access.log",  True),
-    ("ropo.co",                 "ropo.co-access.log",                   True),
     ("robertpowell.org",        "robertpowell.org-access.log",          True),
 ]
 # Outbound links a site routes through a local redirect so clicks show up in its access log:
-# label -> (path prefix, tile label, {suffix: language}). Only ropo.co has one (the "Looking for Ropo.com?" lines).
-OUTBOUND = {
-    "ropo.co": ("/go/ropo-com", "Ropo.com clicks", {"en": "English", "sv": "Swedish", "fi": "Finnish", "no": "Norwegian"}),
-}
+# label -> (path prefix, tile label, {suffix: language}). None here since ropo.co moved to the ropo.uk box (2026-11-05),
+# whose report now carries its "Ropo.com clicks" tile.
+OUTBOUND = {}
 # Machine-only traffic, counted but not detailed: mail servers fetching an
 # MTA-STS policy are not visitors, and the catch-all is pure scanner noise.
 MACHINE_LOG = "other_vhosts_access.log"
@@ -58,7 +56,6 @@ CONTACT_DATA = {
     "rpowell.co.uk":            "/var/www/shared/contact/data/rpowell.co.uk",
     "ultrasecret.net":          "/var/www/shared/contact/data/ultrasecret.net",
     "highlyconfidential.co.uk": "/var/www/highlyconfidential.co.uk/data",
-    "ropo.co":                  "/var/www/shared/contact/data/ropo.co",
     "robertpowell.org":         "/var/www/robertpowell.org/data",
 }
 
