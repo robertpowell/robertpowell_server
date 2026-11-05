@@ -34,6 +34,12 @@ const SITES = [
         'recipient' => 'mail@ropo.co', 'sender' => 'server@ropo.co',
         'data' => '/var/www/shared/contact/data/ropo.co', 'logo' => '', 'accent' => '#0f172a',
     ],
+    'robertpowell.org' => [
+        'name' => 'robertpowell.org', 'url' => 'https://robertpowell.org',
+        'recipient' => 'mail@robertpowell.org', 'sender' => 'server@robertpowell.org',
+        'data' => '/var/www/robertpowell.org/data',
+        'logo' => 'https://robertpowell.org/logo-mark-512.png', 'accent' => '#0f172a',
+    ],
     'new.robertpowell.com' => [
         'name' => 'robertpowell.com', 'url' => 'https://new.robertpowell.com',
         'recipient' => 'mail@robertpowell.com', 'sender' => 'server@robertpowell.com',

@@ -59,6 +59,7 @@ CONTACT_DATA = {
     "ultrasecret.net":          "/var/www/shared/contact/data/ultrasecret.net",
     "highlyconfidential.co.uk": "/var/www/highlyconfidential.co.uk/data",
     "ropo.co":                  "/var/www/shared/contact/data/ropo.co",
+    "robertpowell.org":         "/var/www/robertpowell.org/data",
 }
 
 # Sites whose pages include track.php (-> MySQL visits.events). Only robertpowell.net until ROP-291

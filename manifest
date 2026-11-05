@@ -8,7 +8,8 @@ sites/highlyconfidential.co.uk    | /var/www/highlyconfidential.co.uk           
 sites/highlyconfidential.co.uk/lib| /var/www/highlyconfidential.co.uk/lib          | root:www-data      | 750 | 640 |
 sites/rpowell.co.uk               | /var/www/rpowell.co.uk                         | root:root          | 755 | 644 |
 sites/ultrasecret.net             | /var/www/ultrasecret.net                       | root:root          | 755 | 644 |
-sites/robertpowell.org            | /var/www/robertpowell.org                      | root:root          | 755 | 644 |
+sites/robertpowell.org            | /var/www/robertpowell.org                      | root:root          | 755 | 644 | data/
+sites/robertpowell.org/lib        | /var/www/robertpowell.org/lib                  | root:www-data      | 750 | 640 |
 sites/ropo.co                     | /var/www/ropo.co                               | root:root          | 755 | 644 | public_html/time/log.txt,public_html/time/count.txt,public_html/time/css-count.txt
 sites/ropo.co/lib                 | /var/www/ropo.co/lib                           | root:www-data      | 750 | 640 |
 sites/new.robertpowell.com        | /var/www/new.robertpowell.com                  | www-data:www-data  | 755 | 644 |
