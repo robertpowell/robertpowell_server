@@ -41,6 +41,7 @@ SITES = [
     ("ultrasecret.net",         "ultrasecret.net-access.log",           True),
     ("highlyconfidential.co.uk","highlyconfidential.co.uk-access.log",  True),
     ("ropo.co",                 "ropo.co-access.log",                   True),
+    ("robertpowell.org",        "robertpowell.org-access.log",          True),
 ]
 # Outbound links a site routes through a local redirect so clicks show up in its access log:
 # label -> (path prefix, tile label, {suffix: language}). Only ropo.co has one (the "Looking for Ropo.com?" lines).

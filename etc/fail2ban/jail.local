@@ -151,6 +151,7 @@ logpath  = /var/log/apache2/highlyconfidential.co.uk-access.log
            /var/log/apache2/ultrasecret.net-access.log
            /var/log/apache2/new.robertpowell.com-access.log
            /var/log/apache2/ropo.co-access.log
+           /var/log/apache2/robertpowell.org-access.log
 findtime = 1h
 maxretry = 8
 bantime  = 1d
