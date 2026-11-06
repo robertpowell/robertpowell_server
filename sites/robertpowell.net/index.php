@@ -72,5 +72,7 @@ include ('header.php');
     $event="PageVisit";
     include ('footer.php');
     // add tracking php after this.
+    // ROP-348 (2026-11-06): send the finished page first; tracking (DeviceDetector, GeoLite2, MySQL) runs after the response.
+    if (function_exists('fastcgi_finish_request')) { fastcgi_finish_request(); }
     include ('track.php');
     ?>

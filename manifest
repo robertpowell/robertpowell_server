@@ -17,6 +17,7 @@ sites/mta-sts/robertpowell.net    | /var/www/mta-sts.robertpowell.net           
 sites/mta-sts/rpowell.co.uk       | /var/www/mta-sts.rpowell.co.uk                 | www-data:www-data  | 755 | 644 |
 sites/mta-sts/ultrasecret.net     | /var/www/mta-sts.ultrasecret.net               | www-data:www-data  | 755 | 644 |
 shared/contact                    | /var/www/shared/contact                        | root:www-data      | 750 | 640 | data/
+shared/lib                        | /var/www/shared/lib                            | root:root          | 755 | 644 |
 shared/qr                         | /var/www/shared/qr                             | root:www-data      | 750 | 640 | vendor/
 blog/app                          | /opt/ropo-blog/app                             | root:root          | 755 | 644 | __pycache__/
 bin                               | /usr/local/bin                                 | root:root          | 755 | 755 | composer,__pycache__/

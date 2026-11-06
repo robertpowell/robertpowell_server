@@ -1,0 +1,147 @@
+/* robertpowell.net - hand-written stylesheet, 2026-11-06.
+   Replaces Bootstrap 4.5 (160 KB) with only the pieces this site uses, keeping the same look:
+   reboot, container/row/cols, dark fixed navbar with a collapse, jumbotron, modal, and a few utilities.
+   Icon rules live in icons.css; the author styles that used to be main.css are at the end. */
+
+@font-face {
+    font-family: "Montserrat";
+    src: url("../fonts/montserrat-latin.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+/* ---- reboot ---- */
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: sans-serif; line-height: 1.15; -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+       font-size: 16px; font-weight: 400; line-height: 1.5; color: #212529; text-align: left; background-color: #fff; padding-bottom: 20px; }
+[hidden] { display: none !important; }
+hr { box-sizing: content-box; height: 0; overflow: visible; margin: 1rem 0; border: 0; border-top: 1px solid rgba(0, 0, 0, .1); }
+h1, h2, h3, h4, h5, h6 { margin-top: 0; margin-bottom: .5rem; font-weight: 500; line-height: 1.2; }
+h1 { font-size: 2.5rem; } h2 { font-size: 2rem; } h3 { font-size: 1.75rem; } h4 { font-size: 1.5rem; } h5 { font-size: 1.25rem; } h6 { font-size: 1rem; }
+.display-1 { font-size: 6rem; font-weight: 300; line-height: 1.2; }
+p { margin-top: 0; margin-bottom: 1rem; }
+ul { margin-top: 0; margin-bottom: 1rem; }
+small, .small { font-size: 80%; font-weight: 400; }
+a { color: #007bff; text-decoration: none; background-color: transparent; }
+a:hover { color: #0056b3; text-decoration: underline; }
+button { margin: 0; font-family: inherit; font-size: inherit; line-height: inherit; overflow: visible; text-transform: none; -webkit-appearance: button; }
+img { vertical-align: middle; border-style: none; }
+footer { display: block; }
+
+/* ---- layout ---- */
+.container { width: 100%; padding-right: 15px; padding-left: 15px; margin-right: auto; margin-left: auto; }
+@media (min-width: 576px)  { .container { max-width: 540px; } }
+@media (min-width: 768px)  { .container { max-width: 720px; } }
+@media (min-width: 992px)  { .container { max-width: 960px; } }
+@media (min-width: 1200px) { .container { max-width: 1140px; } }
+.row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }
+.col, [class*="col-"] { position: relative; width: 100%; padding-right: 15px; padding-left: 15px; }
+.col { flex-basis: 0; flex-grow: 1; max-width: 100%; }
+@media (min-width: 576px) {
+    .col-sm-1  { flex: 0 0 8.333333%;  max-width: 8.333333%; }
+    .col-sm-2  { flex: 0 0 16.666667%; max-width: 16.666667%; }
+    .col-sm-4  { flex: 0 0 33.333333%; max-width: 33.333333%; }
+    .col-sm-8  { flex: 0 0 66.666667%; max-width: 66.666667%; }
+    .col-sm-10 { flex: 0 0 83.333333%; max-width: 83.333333%; }
+}
+@media (min-width: 768px) {
+    .col-md-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+    .col-md-6 { flex: 0 0 50%; max-width: 50%; }
+}
+@media (min-width: 992px) {
+    .col-lg-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
+    .offset-lg-2 { margin-left: 16.666667%; }
+}
+
+/* ---- navbar (navbar-expand-lg navbar-dark bg-dark fixed-top) ---- */
+.navbar { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: .5rem 1rem; }
+.fixed-top { position: fixed; top: 0; right: 0; left: 0; z-index: 1030; }
+.navbar-brand { display: inline-block; padding-top: .3125rem; padding-bottom: .3125rem; margin-right: 1rem; font-size: 1.25rem; line-height: inherit; white-space: nowrap; }
+.navbar-nav { display: flex; flex-direction: column; padding-left: 0; margin-bottom: 0; list-style: none; }
+.nav-link { display: block; padding: .5rem 1rem; }
+.navbar-nav .nav-link { padding-right: 0; padding-left: 0; }
+.navbar-collapse { flex-basis: 100%; flex-grow: 1; align-items: center; }
+.collapse:not(.show) { display: none; }
+.navbar-toggler { padding: .25rem .75rem; font-size: 1.25rem; line-height: 1; background-color: transparent; border: 1px solid transparent; border-radius: .25rem; cursor: pointer; }
+.navbar-dark .navbar-brand, .navbar-dark .navbar-brand:hover { color: #fff; }
+.navbar-dark .navbar-nav .nav-link { color: rgba(255, 255, 255, .5); }
+.navbar-dark .navbar-nav .nav-link:hover, .navbar-dark .navbar-nav .nav-link:focus { color: rgba(255, 255, 255, .75); }
+.navbar-dark .navbar-nav .active > .nav-link, .navbar-dark .navbar-nav .nav-link.active { color: #fff; }
+.navbar-dark .navbar-toggler { color: rgba(255, 255, 255, .5); border-color: rgba(255, 255, 255, .1); }
+@media (min-width: 992px) {
+    .navbar-expand-lg { flex-flow: row nowrap; justify-content: flex-start; }
+    .navbar-expand-lg .navbar-nav { flex-direction: row; }
+    .navbar-expand-lg .navbar-nav .nav-link { padding-right: .5rem; padding-left: .5rem; }
+    .navbar-expand-lg .navbar-collapse { display: flex !important; flex-basis: auto; }
+    .navbar-expand-lg .navbar-toggler { display: none; }
+}
+.nav-link:hover { text-decoration: none; }
+
+/* ---- jumbotron ---- */
+.jumbotron { padding: 2rem 1rem; margin-bottom: 2rem; background-color: #e9ecef; border-radius: .3rem; }
+@media (min-width: 576px) { .jumbotron { padding: 4rem 2rem; } }
+.jumbotron-fluid { padding-right: 0; padding-left: 0; border-radius: 0; }
+
+/* ---- modal, now a native <dialog> ---- */
+dialog.modal { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+               background: transparent; color: inherit; overflow-x: hidden; overflow-y: auto; }
+dialog.modal::backdrop { background-color: rgba(0, 0, 0, .5); }
+.modal-dialog { position: relative; width: auto; margin: .5rem; pointer-events: none; }
+@media (min-width: 576px) { .modal-dialog { max-width: 500px; margin: 1.75rem auto; } }
+@media (min-width: 992px) { .modal-lg { max-width: 800px; } }
+.modal-content { position: relative; display: flex; flex-direction: column; width: 100%; pointer-events: auto; background-color: #fff;
+                 background-clip: padding-box; border: 1px solid rgba(0, 0, 0, .2); border-radius: .3rem; outline: 0; }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 1rem; border-bottom: 1px solid #dee2e6; border-top-left-radius: .3rem; border-top-right-radius: .3rem; }
+.modal-title { margin-bottom: 0; line-height: 1.5; }
+.modal-body { position: relative; flex: 1 1 auto; padding: 1rem; }
+.modal-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; padding: .75rem; border-top: 1px solid #dee2e6; border-bottom-right-radius: .3rem; border-bottom-left-radius: .3rem; }
+.modal-footer > * { margin: .25rem; }
+.close { float: right; font-size: 1.5rem; font-weight: 700; line-height: 1; color: #000; opacity: .5; padding: 0; background-color: transparent; border: 0; cursor: pointer; }
+.close:hover { opacity: .75; }
+.btn { display: inline-block; font-weight: 400; color: #212529; text-align: center; vertical-align: middle; user-select: none; background-color: transparent;
+       border: 1px solid transparent; padding: .375rem .75rem; font-size: 1rem; line-height: 1.5; border-radius: .25rem; cursor: pointer; }
+.btn-info { color: #fff; background-color: #17a2b8; border-color: #17a2b8; }
+.btn-info:hover { filter: brightness(.92); }
+
+/* ---- utilities ---- */
+.text-center { text-align: center !important; }
+.text-right { text-align: right !important; }
+.text-justify { text-align: justify !important; }
+.text-white { color: #fff !important; }
+.text-light { color: #f8f9fa !important; }
+.text-black { color: #000 !important; }
+.bg-dark { background-color: #343a40 !important; }
+.bg-light { background-color: #f8f9fa !important; }
+.font-weight-bold { font-weight: 700 !important; }
+.d-block { display: block !important; }
+.d-none { display: none !important; }
+@media (min-width: 576px) { .d-sm-block { display: block !important; } .d-sm-none { display: none !important; } }
+@media (min-width: 992px) { .d-lg-none { display: none !important; } }
+.pt-5 { padding-top: 3rem !important; }
+.pl-2 { padding-left: .5rem !important; }
+.mt-4 { margin-top: 1.5rem !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* ---- author styles (formerly main.css) ---- */
+h1, h2, h3, p { font-family: "Montserrat", sans-serif; }
+.logo h1 { color: white; background-color: #fa4a04; border-radius: 10px; }
+.sublogo { font-size: 4vw; }
+.addr { font-size: 2vw; }
+.logosmall h1 { color: white; background-color: #fa4a04; border-radius: 5px; border-style: solid; border-width: 2px; border-color: #fa4a04; }
+.logosmall h1:hover { color: #fa4a04; background-color: white; border-radius: 10px; }
+#map { height: 100%; width: 100%; padding-bottom: 15px; }
+.logopic { width: 100%; padding: 0; }
+.mid { background-color: #eaecef; padding-bottom: 0; }
+.smimage { margin: 0 auto; width: 25%; }
+
+/* ---- light navbar, always expanded (404 page) ---- */
+.navbar-expand { flex-flow: row nowrap; justify-content: flex-start; }
+.navbar-expand .navbar-nav { flex-direction: row; }
+.navbar-expand .navbar-nav .nav-link { padding-right: .5rem; padding-left: .5rem; }
+.navbar-expand .navbar-collapse { display: flex !important; flex-basis: auto; }
+.navbar-light .navbar-brand, .navbar-light .navbar-brand:hover { color: rgba(0, 0, 0, .9); }
+.navbar-light .navbar-nav .nav-link { color: rgba(0, 0, 0, .5); }
+.navbar-light .navbar-nav .nav-link:hover { color: rgba(0, 0, 0, .7); }
+.navbar-light .navbar-nav .active > .nav-link { color: rgba(0, 0, 0, .9); }
+.navbar-brand.nav-link { display: inline-block; }   /* 404 page: the "Here" link stays inline, as Bootstrap's rule order had it */

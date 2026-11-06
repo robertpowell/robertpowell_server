@@ -12,13 +12,14 @@ $csp_nonce = base64_encode(random_bytes(16));
 //   - "connect-src https://*/fontawesome.com/*/"  -> malformed host+path.
 //   - "worker-src 'self' child-src blob:"  -> missing semicolon, so "child-src"
 //     was parsed as a source expression and no child-src directive existed.
+// 2026-11-06 (ROP-348): the *.fontawesome.com sources went with the Font Awesome kit; everything is served from here.
 header("Content-Security-Policy: "
     . "default-src 'self'; "
-    . "script-src 'self' 'nonce-{$csp_nonce}' https://*.fontawesome.com; "
-    . "style-src 'self' 'unsafe-inline' https://*.fontawesome.com; "
-    . "font-src 'self' data: https://*.fontawesome.com; "
+    . "script-src 'self' 'nonce-{$csp_nonce}'; "
+    . "style-src 'self' 'unsafe-inline'; "
+    . "font-src 'self' data:; "
     . "img-src * data: blob:; "
-    . "connect-src 'self' https://*.fontawesome.com; "
+    . "connect-src 'self'; "
     . "worker-src 'self' blob:; "
     . "child-src 'self' blob:; "
     . "object-src 'none'; "
@@ -35,15 +36,15 @@ header("X-Frame-Options: DENY");   // OWASP review 2026-09-05: legacy twin of fr
 $canonical_path = $_SERVER['SCRIPT_NAME'] ?? '/';
 if ($canonical_path === '/index.php') { $canonical_path = '/'; }
 $canonical_url = 'https://robertpowell.net' . $canonical_path;
+
+// Page name (index, privacy, contact): site.js marks the matching nav item active.
+$page_name = basename($_SERVER['PHP_SELF'] ?? '', '.php');
+
+// Asset versions: the file's mtime in the query string, so a 1-year immutable cache (.htaccess) is safe.
+$asset = function (string $path): string { return htmlspecialchars($path . '?v=' . @filemtime(__DIR__ . $path), ENT_QUOTES); };
 ?>
 <!doctype html>
-<!-- dev copy -->
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
-<!--[if gt IE 8]><!-->
-<html class="no-js" lang="en">
-<!--<![endif]-->
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
@@ -53,16 +54,9 @@ $canonical_url = 'https://robertpowell.net' . $canonical_path;
     <meta name="description" content="Robert Powell - Consultancy - Data Surveillance and Forensic analysis">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Fontawesome -->
-    <link type="text/css" href="/css/all.min.css" rel="stylesheet">
-
-
-    <!-- <script src="https://kit.fontawesome.com/c23551763c.js" crossorigin="anonymous"></script> -->
-
-    <!-- Bootstrap  CSS -->
-    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
-    <!-- My Styles -->
-    <link rel="stylesheet" href="css/main.css">
+    <!-- Styles (ROP-348, 2026-11-06): site.css replaces Bootstrap + main.css, icons.css + two subset fonts replace Font Awesome's all.min.css -->
+    <link rel="stylesheet" href="<?= $asset('/css/site.css') ?>">
+    <link rel="stylesheet" href="<?= $asset('/css/icons.css') ?>">
     <!-- Fav Icons -->
     <link rel="apple-touch-icon" href="foot.png">
     <link rel="icon" href="favicon.ico">
@@ -70,7 +64,7 @@ $canonical_url = 'https://robertpowell.net' . $canonical_path;
     <title>Robert Powell</title>
 </head>
 
-<body class="pt-5">
+<body class="pt-5" data-page="<?= htmlspecialchars($page_name, ENT_QUOTES) ?>">
     <!-- Navigation Start -->
     <nav class="navbar navbar-expand-lg fixed-top bg-dark navbar-dark" id="mynavbar">
         <a class="navbar-brand" href="index.php">Robert Powell - Consultancy</a>

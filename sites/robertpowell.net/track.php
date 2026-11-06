@@ -17,6 +17,8 @@ use DeviceDetector\Parser\Device\AbstractDeviceParser;
 // User agent detection via Device Detector (local, no API)
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 $dd = new DeviceDetector($userAgent);
+require_once '/var/www/shared/lib/device-detector-cache.php';   // APCu: parsed regexes persist across requests (ROP-348)
+if ($ddCache = \RpShared\device_detector_cache()) { $dd->setCache($ddCache); }
 $dd->parse();
 
 // Extract values from Device Detector

@@ -37,6 +37,8 @@ $rec = ['ts' => gmdate('Y-m-d\TH:i:s\Z'), 'ip' => $ip, 'sid' => $sid, 'ev' => 'd
 try {
     require_once '/var/www/vendor/autoload.php';
     $dd = new \DeviceDetector\DeviceDetector($ua);
+    require_once '/var/www/shared/lib/device-detector-cache.php';   // APCu cache (ROP-348)
+    if ($ddCache = \RpShared\device_detector_cache()) { $dd->setCache($ddCache); }
     $dd->parse();
     $unk = fn($x) => in_array($x, [null, '', 'UNK'], true) ? '' : (string)$x;
     $rec['device']  = trim(implode(' ', array_filter([$dd->getBrandName(), $dd->getModel()]))) ?: ($dd->getDeviceName() ?: '');
