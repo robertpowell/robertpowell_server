@@ -183,12 +183,15 @@ def history(allsess, now):
     """One row per local calendar day, newest first: sessions, to the end, in part, opened only, downloads, addresses.
     Covers the last HISTORY_DAYS days (zero days included once there is any data); older activity is one 'earlier' row."""
     today = now.astimezone(TZ).date()
-    counts = defaultdict(lambda: {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set()})
+    counts = defaultdict(lambda: {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set(),
+                                  "countries": defaultdict(int)})
     for s in allsess.values():
         d = s["first"].astimezone(TZ).date()
         c = counts[d]
         c["sessions"] += 1
         c["ips"].add(s["ip"])
+        g = s.get("geo") or {}
+        c["countries"][(g.get("cc") or "", g.get("country") or "unknown")] += 1
         label = verdict(s)[0]
         c["end" if label == "Watched to the end" else "part" if label == "Watched part of it"
           else "failed" if label == "Playback failed" else "opened"] += 1
@@ -196,6 +199,8 @@ def history(allsess, now):
         d = t.astimezone(TZ).date()
         counts[d]["dl"] += 1
         counts[d]["ips"].add(e.get("ip", ""))
+        g = e.get("geo") or {}
+        counts[d]["countries"][(g.get("cc") or "", g.get("country") or "unknown")] += 1
     if not counts:
         return []
     first_day = min(counts)
@@ -208,13 +213,45 @@ def history(allsess, now):
         d -= dt.timedelta(days=1)
     older = [k for k in counts if k < cutoff]
     if older:
-        agg = {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set()}
+        agg = {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set(), "countries": defaultdict(int)}
         for k in older:
             for f in ("sessions", "end", "part", "opened", "failed", "dl"):
                 agg[f] += counts[k][f]
             agg["ips"] |= counts[k]["ips"]
+            for key, n in counts[k]["countries"].items():
+                agg["countries"][key] += n
         rows.append((f"Earlier ({min(older):%d %b} to {max(older):%d %b})", "", agg))
     return rows
+
+
+MAX_FLAGS = 4   # flags per day in the history table, laid out 2 x 2
+
+
+def flag(cc):
+    """Regional-indicator emoji for a two-letter country code; white flag when unknown."""
+    cc = (cc or "").upper()
+    if len(cc) == 2 and cc.isalpha():
+        return "".join(chr(0x1F1E6 + ord(ch) - 65) for ch in cc)
+    return "\U0001F3F3\uFE0F"
+
+
+def top_countries(c):
+    """[(cc, name, n)] by sessions desc, at most MAX_FLAGS."""
+    if not c:
+        return []
+    return [(cc, name, n) for (cc, name), n in sorted(c["countries"].items(), key=lambda kv: (-kv[1], kv[0][1]))][:MAX_FLAGS]
+
+
+def flag_grid(c):
+    """Up to four flags in a 2 x 2 nested table (email-safe), each with the country and count as a tooltip."""
+    tops = top_countries(c)
+    if not tops:
+        return ""
+    cells = [f'<td style="padding:0 2px;font-size:18px;line-height:22px;text-align:center" title="{esc(name)}: {n}">{flag(cc)}</td>'
+             for cc, name, n in tops]
+    rows = ["".join(cells[i:i + 2]) for i in range(0, len(cells), 2)]
+    return ('<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;display:inline-table">'
+            + "".join(f"<tr>{r}</tr>" for r in rows) + "</table>")
 
 
 def history_html(rows):
@@ -225,7 +262,7 @@ def history_html(rows):
     cols = (("sessions", INK), ("end", GREEN), ("part", AMBER), ("opened", GREY), ("dl", INK))
     out = [f'<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px">'
            f'<tr><th {thl}>Day</th><th {th}>Sessions</th><th {th}>To the end</th><th {th}>In part</th>'
-           f'<th {th}>Opened only</th><th {th}>Downloads</th><th {th}>Addresses</th></tr>']
+           f'<th {th}>Opened only</th><th {th}>Downloads</th><th {th}>Addresses</th><th {th}>From</th></tr>']
     for day, tag, c in rows:
         empty = c is None or (c["sessions"] == 0 and c["dl"] == 0)
         dim = f'color:{MUTED};' if empty else ""
@@ -235,6 +272,7 @@ def history_html(rows):
             cells.append(f'<td style="padding:6px 10px;border-top:1px solid {RULE};text-align:right;{"color:" + colour + ";font-weight:600" if n and colour != INK else dim}">{n if n or not empty else "–"}</td>')
         ips = 0 if c is None else len(c["ips"])
         cells.append(f'<td style="padding:6px 10px;border-top:1px solid {RULE};text-align:right;{dim}">{ips if ips or not empty else "–"}</td>')
+        cells.append(f'<td style="padding:3px 10px;border-top:1px solid {RULE};text-align:right;vertical-align:middle">{flag_grid(c)}</td>')
         out.append(f'<tr><td style="padding:6px 10px;border-top:1px solid {RULE};white-space:nowrap;{dim}">{esc(day)}'
                    + (f' <span style="color:{MUTED};font-size:12px">{tag}</span>' if tag else "") + "</td>" + "".join(cells) + "</tr>")
     out.append("</table>")
@@ -244,11 +282,12 @@ def history_html(rows):
 def history_text(rows):
     if not rows:
         return []
-    lines = [f"{'Day':<28}{'Sess':>6}{'End':>6}{'Part':>6}{'Open':>6}{'DL':>6}{'IPs':>6}"]
+    lines = [f"{'Day':<28}{'Sess':>6}{'End':>6}{'Part':>6}{'Open':>6}{'DL':>6}{'IPs':>6}  From"]
     for day, tag, c in rows:
-        c = c or {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set()}
+        c = c or {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set(), "countries": {}}
         name = day + (f" ({tag})" if tag else "")
-        lines.append(f"{name:<28}{c['sessions']:>6}{c['end']:>6}{c['part']:>6}{c['opened'] + c['failed']:>6}{c['dl']:>6}{len(c['ips']):>6}")
+        frm = ", ".join(f"{cc or '??'} {n}" for cc, _, n in top_countries(c))
+        lines.append(f"{name:<28}{c['sessions']:>6}{c['end']:>6}{c['part']:>6}{c['opened'] + c['failed']:>6}{c['dl']:>6}{len(c['ips']):>6}  {frm}")
     return lines
 
 
