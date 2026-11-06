@@ -3,7 +3,8 @@
 polar-video-report.py — daily email: has the /polar/ video on robertpowell.net been watched?
 
 Reads /var/lib/polar-video/events.jsonl (written by /var/www/html/polar/beacon.php from polar.js), groups the
-events into viewing sessions (one per page load) and reports the last 24 h plus running totals. The Apache
+events into viewing sessions (one per page load) and reports the last 24 h, a day-by-day history table (last
+HISTORY_DAYS calendar days, Europe/London, older days rolled into one row) and running totals. The Apache
 log adds what the script cannot see: page requests from clients that never ran it (bots, text fetches) and
 full downloads of the file (a 200 for the whole file, as opposed to the player's 206 range requests).
 
@@ -34,6 +35,7 @@ TO = "mail@robertpowell.com"
 SENDER = f"{SITE} <server@{SITE}>"
 TZ = zoneinfo.ZoneInfo("Europe/London")
 HOURS = int(os.environ.get("REPORT_HOURS", "24"))
+HISTORY_DAYS = int(os.environ.get("REPORT_HISTORY_DAYS", "30"))   # rows in the by-day table
 TEST = os.environ.get("REPORT_TEST") == "1"
 VIDEO_EXT = (".mp4", ".m4v", ".webm", ".mov")
 
@@ -177,6 +179,79 @@ def access(since, vfile, vsize):
     return hits, hit_ips, downloads
 
 
+def history(allsess, now):
+    """One row per local calendar day, newest first: sessions, to the end, in part, opened only, downloads, addresses.
+    Covers the last HISTORY_DAYS days (zero days included once there is any data); older activity is one 'earlier' row."""
+    today = now.astimezone(TZ).date()
+    counts = defaultdict(lambda: {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set()})
+    for s in allsess.values():
+        d = s["first"].astimezone(TZ).date()
+        c = counts[d]
+        c["sessions"] += 1
+        c["ips"].add(s["ip"])
+        label = verdict(s)[0]
+        c["end" if label == "Watched to the end" else "part" if label == "Watched part of it"
+          else "failed" if label == "Playback failed" else "opened"] += 1
+    for t, e in DOWNLOADS:
+        d = t.astimezone(TZ).date()
+        counts[d]["dl"] += 1
+        counts[d]["ips"].add(e.get("ip", ""))
+    if not counts:
+        return []
+    first_day = min(counts)
+    cutoff = today - dt.timedelta(days=HISTORY_DAYS - 1)
+    rows = []
+    d = today
+    while d >= max(cutoff, first_day):
+        c = counts.get(d)
+        rows.append((d.strftime("%a %d %b"), "today" if d == today else "yesterday" if d == today - dt.timedelta(days=1) else "", c))
+        d -= dt.timedelta(days=1)
+    older = [k for k in counts if k < cutoff]
+    if older:
+        agg = {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set()}
+        for k in older:
+            for f in ("sessions", "end", "part", "opened", "failed", "dl"):
+                agg[f] += counts[k][f]
+            agg["ips"] |= counts[k]["ips"]
+        rows.append((f"Earlier ({min(older):%d %b} to {max(older):%d %b})", "", agg))
+    return rows
+
+
+def history_html(rows):
+    if not rows:
+        return ""
+    th = f'style="padding:6px 10px;text-align:right;font-size:12px;color:{MUTED};text-transform:uppercase;letter-spacing:.04em"'
+    thl = th.replace("text-align:right", "text-align:left")
+    cols = (("sessions", INK), ("end", GREEN), ("part", AMBER), ("opened", GREY), ("dl", INK))
+    out = [f'<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px">'
+           f'<tr><th {thl}>Day</th><th {th}>Sessions</th><th {th}>To the end</th><th {th}>In part</th>'
+           f'<th {th}>Opened only</th><th {th}>Downloads</th><th {th}>Addresses</th></tr>']
+    for day, tag, c in rows:
+        empty = c is None or (c["sessions"] == 0 and c["dl"] == 0)
+        dim = f'color:{MUTED};' if empty else ""
+        cells = []
+        for key, colour in cols:
+            n = 0 if c is None else c[key] + (c["failed"] if key == "opened" else 0)
+            cells.append(f'<td style="padding:6px 10px;border-top:1px solid {RULE};text-align:right;{"color:" + colour + ";font-weight:600" if n and colour != INK else dim}">{n if n or not empty else "–"}</td>')
+        ips = 0 if c is None else len(c["ips"])
+        cells.append(f'<td style="padding:6px 10px;border-top:1px solid {RULE};text-align:right;{dim}">{ips if ips or not empty else "–"}</td>')
+        out.append(f'<tr><td style="padding:6px 10px;border-top:1px solid {RULE};white-space:nowrap;{dim}">{esc(day)}'
+                   + (f' <span style="color:{MUTED};font-size:12px">{tag}</span>' if tag else "") + "</td>" + "".join(cells) + "</tr>")
+    out.append("</table>")
+    return "".join(out)
+
+
+def history_text(rows):
+    if not rows:
+        return []
+    lines = [f"{'Day':<28}{'Sess':>6}{'End':>6}{'Part':>6}{'Open':>6}{'DL':>6}{'IPs':>6}"]
+    for day, tag, c in rows:
+        c = c or {"sessions": 0, "end": 0, "part": 0, "opened": 0, "failed": 0, "dl": 0, "ips": set()}
+        name = day + (f" ({tag})" if tag else "")
+        lines.append(f"{name:<28}{c['sessions']:>6}{c['end']:>6}{c['part']:>6}{c['opened'] + c['failed']:>6}{c['dl']:>6}{len(c['ips']):>6}")
+    return lines
+
+
 def build():
     now = dt.datetime.now(dt.timezone.utc)
     since = now - dt.timedelta(hours=HOURS)
@@ -212,6 +287,9 @@ def build():
     t_ips = len({s["ip"] for s in total})
     t_dl = len(DOWNLOADS)
     first = min((s["first"] for s in total), default=None)
+
+    hist = history(allsess, now)
+    hist_html = history_html(hist)
 
     # html
     rows = []
@@ -260,6 +338,7 @@ def build():
   <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.85">Polar video · last {HOURS} hours</div>
   <div style="font-size:22px;font-weight:600;margin-top:4px">{esc(head)}</div></td></tr>
 <tr><td style="background:{SURF};border:1px solid {RULE};border-top:0;padding:16px 20px">{table}</td></tr>
+{f'<tr><td style="border:1px solid {RULE};border-top:0;padding:14px 20px"><div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:{MUTED};margin-bottom:8px">Day by day · last {min(HISTORY_DAYS, len(hist))} days</div>{hist_html}</td></tr>' if hist_html else ""}
 <tr><td style="border:1px solid {RULE};border-top:0;padding:14px 20px;font-size:13px;color:{MUTED}">
   <div>{totals}</div>
   <div style="margin-top:6px">Video: {video_line}. Page: <a href="{PAGE}" style="color:{MUTED}">{esc(PAGE)}</a></div>
@@ -276,6 +355,8 @@ def build():
         text.append(f"{local(s['first'])}  {place}{' (' + extra + ')' if extra else ''}  {s['ip']}  {device(s)}  {label}: {detail}")
     if not recent:
         text.append(f"No viewing sessions in the last {HOURS} hours.")
+    if hist:
+        text += ["", "Day by day:", *history_text(hist)]
     text += ["", re.sub("<[^>]+>", "", totals), "Video: " + re.sub("<[^>]+>", "", video_line), *[re.sub("<[^>]+>", "", n) for n in notes]]
     subject = ("[test] " if TEST else "") + f"Polar video: {head}"
     return subject, html_body, "\n".join(text)
