@@ -1,0 +1,27 @@
+{
+  "host": "robertpowell.net",
+  "enabled": true,
+  "slot": "05:20",
+  "downtime_note": "robertpowell.net and its sites will be unavailable for about 1 minute.",
+  "services": ["apache2", "php8.5-fpm", "mysql", "postfix", "opendkim", "fail2ban", "ufw",
+               "geoip-nftables", "ropo-blog", "cron", "rsyslog", "unattended-upgrades", "ssh",
+               "tailscaled", "do-agent", "snap.canonical-livepatch.canonical-livepatchd"],
+  "ports": ["0.0.0.0:22", "*:80", "*:443", "127.0.0.1:25", "127.0.0.1:3306"],
+  "nft_tables": ["inet geoip-filter", "inet f2b-table"],
+  "min_jails": 10,
+  "livepatch": true,
+  "urls": [
+    {"url": "https://robertpowell.net/", "ok": [403]},
+    {"url": "https://robertpowell.com/"},
+    {"url": "https://robertpowell.org/"},
+    {"url": "https://rpowell.co.uk/"},
+    {"url": "https://highlyconfidential.co.uk/"},
+    {"url": "https://ultrasecret.net/"},
+    {"url": "https://new.robertpowell.com/"},
+    {"url": "https://mta-sts.robertpowell.net/.well-known/mta-sts.txt"}
+  ],
+  "busy": [
+    {"pattern": "daily_tests.sh", "why": "the daily NDA tests are running"},
+    {"pattern": "restic-backup|restic backup", "why": "the restic backup is running"}
+  ]
+}

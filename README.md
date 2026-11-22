@@ -19,7 +19,7 @@ The nda-tests code lives in its own repository (`ropo.uk`) and is not part of th
 | `shared/qr` | `/var/www/shared/qr` | composer manifest for the QR library (`vendor/` is not tracked) |
 | `blog/app` | `/opt/ropo-blog/app` | Flask blog and its import/tidy scripts |
 | `blog/` | | `requirements.txt`, `blog.env.example`, `ropo-blog.service` copy under `etc/systemd` |
-| `bin`, `sbin` | `/usr/local/bin`, `/usr/local/sbin` | daily visitor report, mail queue check, restic backup, post-reboot check |
+| `bin`, `sbin` | `/usr/local/bin`, `/usr/local/sbin` | daily visitor report, mail queue check, restic backup, reboot-manager (planned reboots + post-boot health check, config in `etc/reboot-manager.json`) |
 | `etc/...` | `/etc/...` | only the files this box customises; package defaults are excluded |
 
 `manifest` is the single source of truth for the mapping, including owner, modes and per-path excludes.

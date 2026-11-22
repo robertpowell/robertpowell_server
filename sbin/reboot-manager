@@ -1,0 +1,248 @@
+#!/usr/bin/python3 -I
+"""Planned early-morning reboots for new kernels/libraries, with Pushover before and after.
+
+A port of FFC's ffc-reboot-manager (FFC-20) to ropo.uk and robertpowell.net (RoPo, 21 Nov 2026:
+"All boxes to follow the FFC design"). One script; each box's details are in
+/etc/reboot-manager.json (host name, services, ports, nft tables, URLs, busy checks, time).
+
+  reboot-manager auto        root cron, daily at the box's slot. If unattended-upgrades has
+                             flagged a reboot, send a Pushover saying what and why, then reboot.
+  reboot-manager post-boot   root cron @reboot. Waits for services to settle, runs the health
+                             checks and sends "rebooted OK" (or what failed). Also reports
+                             reboots nobody scheduled.
+  reboot-manager check       print the health checks now (no Pushover, no reboot).
+  --dry-run                  on auto/post-boot: print the message instead of sending or rebooting.
+
+SAFEGUARDS (RoPo's rule: no send/reboot code a cron can run without an OFF-by-default switch
+and RoPo's OK): `auto` reboots only when the config has "enabled": true (RoPo, 21 Nov 2026).
+At most one automatic reboot per day. Postponed (with a Pushover) while anything in "busy" runs.
+Credentials: /etc/reboot-manager-pushover.env (0600 root) with PUSHOVER_TOKEN and PUSHOVER_USER.
+If Pushover can't be reached the reboot still happens - security updates matter more than the
+notification. Log: /var/log/reboot-manager.log (kept 3 years).
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+import urllib.parse
+import urllib.request
+from datetime import datetime, timezone
+
+CONF = "/etc/reboot-manager.json"
+CREDS = "/etc/reboot-manager-pushover.env"
+STATE_DIR = "/var/lib/reboot-manager"
+PENDING = f"{STATE_DIR}/pending.json"
+LAST_AUTO = f"{STATE_DIR}/last-auto-reboot"
+REBOOT_FLAG = "/var/run/reboot-required"
+REBOOT_PKGS = "/var/run/reboot-required.pkgs"
+SETTLE_SECONDS = 120
+
+C = json.load(open(CONF))
+HOST = C["host"]
+
+
+def now():
+    return datetime.now(timezone.utc)
+
+
+def log(msg):
+    print(f"{now():%Y-%m-%d %H:%M:%SZ} {msg}", flush=True)
+
+
+def sh(cmd, timeout=30):
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return p.returncode, p.stdout.strip()
+    except Exception as e:
+        return 1, str(e)
+
+
+def pushover(title, message, priority=0, dry=False):
+    if dry:
+        print(f"--- PUSHOVER (dry run, priority {priority})\n{title}\n{message}\n---")
+        return True
+    try:
+        creds = dict(l.strip().split("=", 1) for l in open(CREDS) if "=" in l and not l.startswith("#"))
+        data = urllib.parse.urlencode({"token": creds["PUSHOVER_TOKEN"].strip("'\""),
+                                       "user": creds["PUSHOVER_USER"].strip("'\""),
+                                       "title": title, "message": message[:1024],
+                                       "priority": priority}).encode()
+        with urllib.request.urlopen("https://api.pushover.net/1/messages.json", data=data, timeout=20) as r:
+            ok = json.load(r).get("status") == 1
+        log(f"pushover {'sent' if ok else 'REJECTED'}: {title}")
+        return ok
+    except Exception as e:
+        log(f"pushover FAILED ({type(e).__name__}): {title}")
+        return False
+
+
+def newest_kernel():
+    ks = [f[len("vmlinuz-"):] for f in os.listdir("/boot") if f.startswith("vmlinuz-") and f.endswith("-generic")]
+    key = lambda v: [int(x) if x.isdigit() else x for x in re.split(r"[.-]", v)]
+    return sorted(ks, key=key)[-1] if ks else "?"
+
+
+def busy():
+    """Reasons not to reboot right now, or [] if it is safe."""
+    why = []
+    rc, _ = sh(["fuser", "/var/lib/dpkg/lock-frontend", "/var/lib/dpkg/lock"])
+    if rc == 0:
+        why.append("apt/dpkg is running")
+    for b in C.get("busy", []):
+        rc, _ = sh(["pgrep", "-f", b["pattern"]])
+        if rc == 0:
+            why.append(b["why"])
+    return why
+
+
+def auto(dry=False):
+    if not os.path.exists(REBOOT_FLAG):
+        log("no reboot required")
+        return 0
+    if not C.get("enabled") and not dry:
+        log("a reboot is required but automatic reboots are OFF (\"enabled\" in %s)" % CONF)
+        return 0
+    today = now().strftime("%Y-%m-%d")
+    try:
+        if open(LAST_AUTO).read().strip() == today and not dry:
+            log("already auto-rebooted today; leaving it for tomorrow")
+            return 0
+    except OSError:
+        pass
+    reasons = busy()
+    if reasons:
+        for _ in range(10):          # try again shortly rather than skipping a whole day
+            time.sleep(60)
+            reasons = busy()
+            if not reasons:
+                break
+    try:
+        pkgs = sorted(set(open(REBOOT_PKGS).read().split()))
+    except OSError:
+        pkgs = []
+    running, target = os.uname().release, newest_kernel()
+    if reasons:
+        pushover(f"{HOST}: reboot postponed",
+                 f"A reboot is needed ({', '.join(pkgs) or 'updates'}) but was postponed: "
+                 f"{'; '.join(reasons)}. Will try again tomorrow at {C['slot']} UTC.", 0, dry)
+        log(f"postponed: {reasons}")
+        return 0
+    what = (f"kernel {running} -> {target}" if target != running else "updated system libraries")
+    msg = (f"Rebooting now to finish installing updates: {what}.\n"
+           f"Packages: {', '.join(pkgs) or 'not listed'}.\n"
+           f"{C['downtime_note']} You'll get a second message when it's back and checked.")
+    pushover(f"{HOST}: rebooting now", msg, 0, dry)
+    if dry:
+        print(f"(dry run: would reboot; running={running} target={target})")
+        return 0
+    os.makedirs(STATE_DIR, mode=0o700, exist_ok=True)
+    with open(PENDING, "w") as f:
+        json.dump({"at": now().isoformat(), "from_kernel": running, "to_kernel": target, "packages": pkgs}, f)
+    with open(LAST_AUTO, "w") as f:
+        f.write(today)
+    log(f"rebooting: {what}; packages {pkgs}")
+    os.sync()
+    subprocess.run(["systemctl", "reboot"])
+    return 0
+
+
+def checks():
+    """(passed, failed) lists of short strings."""
+    ok, bad = [], []
+    for s in C["services"]:
+        rc, out = sh(["systemctl", "is-active", s])
+        (ok if out == "active" else bad).append(s if out == "active" else f"{s} {out or 'unknown'}")
+    rc, out = sh(["systemctl", "--failed", "--no-legend", "--plain"])
+    failed_units = [l.split()[0] for l in out.splitlines() if l.strip()]
+    (bad if failed_units else ok).append(f"failed units: {' '.join(failed_units)}" if failed_units else "no failed units")
+    rc, out = sh(["ss", "-tlnH"])
+    listening = {l.split()[3] for l in out.splitlines() if len(l.split()) > 3}
+    missing = [p for p in C["ports"] if p not in listening and p.replace("*", "[::]") not in listening]
+    (bad if missing else ok).append(f"not listening: {' '.join(missing)}" if missing else "ports " + " ".join(C["ports"]))
+    rc, out = sh(["nft", "list", "tables"])
+    for t in C["nft_tables"]:
+        (ok if t in out else bad).append(f"nft {t}" if t in out else f"nft {t} MISSING")
+    rc, out = sh(["fail2ban-client", "status"])
+    m = re.search(r"Number of jail:\s*(\d+)", out)
+    j = int(m.group(1)) if m else 0
+    (ok if j >= C["min_jails"] else bad).append(f"fail2ban {j} jails")
+    for u in C["urls"]:
+        cmd = ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "15"]
+        if C.get("url_header_cmd"):            # e.g. ropo.uk's signed self-test header (time-based)
+            hrc, hdr = sh(C["url_header_cmd"], 10)
+            if hrc == 0 and hdr:
+                cmd += ["-H", hdr]
+        rc, code = sh(cmd + [u["url"]], 25)
+        want = [str(c) for c in u.get("ok", [200])]
+        (ok if code in want else bad).append(f"{u['url'].split('//')[1]} {code}")
+    rc, out = sh(["tailscale", "status", "--self=true", "--peers=false"])
+    (ok if rc == 0 else bad).append("tailscale up" if rc == 0 else "tailscale DOWN")
+    if C.get("livepatch"):
+        rc, out = sh(["/snap/bin/canonical-livepatch", "status"], 30)
+        lp_ok = rc == 0 and "running: true" in out and "checkState: checked" in out
+        (ok if lp_ok else bad).append("livepatch" if lp_ok else "livepatch not running/checked")
+    running, newest = os.uname().release, newest_kernel()
+    (ok if running == newest else bad).append(f"kernel {running}" if running == newest
+                                              else f"running {running}, newest installed {newest}")
+    return ok, bad
+
+
+def post_boot(dry=False):
+    if not dry:
+        time.sleep(SETTLE_SECONDS)
+    try:
+        pend = json.load(open(PENDING))
+    except (OSError, ValueError):
+        pend = None
+    rc, booted = sh(["uptime", "-s"])
+    ok, bad = checks()
+    running = os.uname().release
+    if pend:
+        try:
+            down = int((datetime.strptime(booted, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                        - datetime.fromisoformat(pend["at"])).total_seconds())
+            down_txt = f" Back up in about {down} s." if 0 <= down <= 3600 else ""
+        except Exception:
+            down_txt = ""
+        kern = (f"now on {running} (was {pend['from_kernel']})" if running != pend["from_kernel"]
+                else f"still on {running}")
+        if pend.get("to_kernel") and running != pend["to_kernel"]:
+            bad.append(f"expected kernel {pend['to_kernel']} but booted {running}")
+        head = "Planned reboot"
+    else:
+        kern, down_txt, head = f"running {running}", "", "UNPLANNED reboot (not scheduled by the auto-reboot)"
+    if bad:
+        title = f"{HOST}: back up, {len(bad)} problem{'s' if len(bad) != 1 else ''}"
+        msg = f"{head}: {kern}.{down_txt}\nFAILED: " + "; ".join(bad) + f"\nPassed {len(ok)} other checks."
+        prio = 1
+    else:
+        title = f"{HOST}: rebooted OK"
+        msg = f"{head}: {kern}.{down_txt}\nAll {len(ok)} checks passed (services, firewall, sites, tailnet, kernel)."
+        prio = 0 if pend else 1
+    pushover(title, msg, prio, dry)
+    if not dry and pend:
+        os.remove(PENDING)
+    log(f"post-boot: {len(ok)} ok, {len(bad)} failed {bad}")
+    return 0
+
+
+def main(argv):
+    args = argv[1:]
+    dry = "--dry-run" in args
+    args = [a for a in args if a != "--dry-run"]
+    if args == ["auto"]:
+        return auto(dry)
+    if args == ["post-boot"]:
+        return post_boot(dry)
+    if args == ["check"]:
+        ok, bad = checks()
+        print(f"{len(ok)} passed: {'; '.join(ok)}\n{len(bad)} failed: {'; '.join(bad) or '-'}")
+        return 1 if bad else 0
+    print(__doc__, file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

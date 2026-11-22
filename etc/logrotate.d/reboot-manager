@@ -1,0 +1,9 @@
+/var/log/reboot-manager.log {
+	monthly
+	rotate 36
+	compress
+	delaycompress
+	missingok
+	notifempty
+	create 0640 root adm
+}

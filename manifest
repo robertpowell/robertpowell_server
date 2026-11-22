@@ -26,7 +26,8 @@ etc/apache2/sites-available       | /etc/apache2/sites-available                
 etc/apache2/conf-available        | /etc/apache2/conf-available                    | root:root          | 755 | 644 | only:no-gzip-contact.conf,security-no-indexes.conf
 etc/fail2ban                      | /etc/fail2ban                                  | root:root          | 755 | 644 | only:jail.local,jail.d/,jail.d/blog.local,filter.d/,filter.d/200visits.conf,filter.d/apache-block-scan-bots.conf,filter.d/apache-custom.conf,filter.d/apache-probe.conf,filter.d/apache-unavaulable.conf,filter.d/app404.conf,filter.d/blog-login.conf,filter.d/connect.conf,filter.d/geo-block.conf,filter.d/hc-contact.conf,filter.d/shellprobe.conf
 etc/cron.d                        | /etc/cron.d                                    | root:root          | 755 | 644 | .placeholder,certbot,e2scrub_all,php,popularity-contest,sysstat
-etc/logrotate.d                   | /etc/logrotate.d                               | root:root          | 755 | 644 | only:contact-data,modsecurity
+etc/logrotate.d                   | /etc/logrotate.d                               | root:root          | 755 | 644 | only:apache2,contact-data,reboot-manager
+etc                               | /etc                                           | root:root          | 755 | 644 | only:reboot-manager.json
 etc/restic                        | /etc/restic                                    | root:root          | 755 | 644 |
 etc/postfix                       | /etc/postfix                                   | root:root          | 755 | 644 | *.db,*.proto,dynamicmaps*,makedefs.out,post-install,postfix-files*,postfix-script,sasl/
 etc/opendkim                      | /etc/opendkim                                  | root:root          | 755 | 644 | keys/

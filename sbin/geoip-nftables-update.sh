@@ -78,7 +78,7 @@ table inet geoip-filter {
         ip6 saddr @whitelist_v6 accept
         ip saddr @allowed_v4 accept
         ip6 saddr @allowed_v6 accept
-        log prefix "geoip-drop " limit rate 10/minute burst 10 packets
+        limit rate 10/minute burst 10 packets log prefix "geoip-drop "
         counter drop
     }
 }
