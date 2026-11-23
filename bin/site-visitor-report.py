@@ -41,6 +41,7 @@ SITES = [
     ("ultrasecret.net",         "ultrasecret.net-access.log",           True),
     ("highlyconfidential.co.uk","highlyconfidential.co.uk-access.log",  True),
     ("robertpowell.org",        "robertpowell.org-access.log",          True),
+    ("ittybit.co.uk",           "ittybit.co.uk-access.log",             True),
 ]
 # Outbound links a site routes through a local redirect so clicks show up in its access log:
 # label -> (path prefix, tile label, {suffix: language}). None here since ropo.co moved to the ropo.uk box (2026-11-05),
@@ -57,6 +58,7 @@ CONTACT_DATA = {
     "ultrasecret.net":          "/var/www/shared/contact/data/ultrasecret.net",
     "highlyconfidential.co.uk": "/var/www/highlyconfidential.co.uk/data",
     "robertpowell.org":         "/var/www/robertpowell.org/data",
+    "ittybit.co.uk":            "/var/www/ittybit.co.uk/data",
 }
 
 # Sites whose pages include track.php (-> MySQL visits.events). Only robertpowell.net until ROP-291

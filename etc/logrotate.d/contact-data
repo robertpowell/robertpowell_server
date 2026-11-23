@@ -2,6 +2,8 @@
 # The privacy policies promise a retention limit, so rotate yearly and keep seven years.
 # copytruncate: the PHP appenders hold no handle, but truncation keeps them oblivious either way.
 /var/www/highlyconfidential.co.uk/data/*.jsonl
+/var/www/robertpowell.org/data/*.jsonl
+/var/www/ittybit.co.uk/data/*.jsonl
 /var/www/shared/contact/data/*/*.jsonl {
     yearly
     rotate 7

@@ -10,8 +10,11 @@ sites/rpowell.co.uk               | /var/www/rpowell.co.uk                      
 sites/ultrasecret.net             | /var/www/ultrasecret.net                       | root:root          | 755 | 644 |
 sites/robertpowell.org            | /var/www/robertpowell.org                      | root:root          | 755 | 644 | data/
 sites/robertpowell.org/lib        | /var/www/robertpowell.org/lib                  | root:www-data      | 750 | 640 |
+sites/ittybit.co.uk               | /var/www/ittybit.co.uk                         | root:root          | 755 | 644 | data/
+sites/ittybit.co.uk/lib           | /var/www/ittybit.co.uk/lib                     | root:www-data      | 750 | 640 |
 sites/new.robertpowell.com        | /var/www/new.robertpowell.com                  | www-data:www-data  | 755 | 644 |
 sites/mta-sts/highlyconfidential.co.uk | /var/www/mta-sts.highlyconfidential.co.uk | www-data:www-data  | 755 | 644 |
+sites/mta-sts/ittybit.co.uk       | /var/www/mta-sts.ittybit.co.uk                 | www-data:www-data  | 755 | 644 |
 sites/mta-sts/robertpowell.com    | /var/www/mta-sts.robertpowell.com              | www-data:www-data  | 755 | 644 |
 sites/mta-sts/robertpowell.net    | /var/www/mta-sts.robertpowell.net              | www-data:www-data  | 755 | 644 |
 sites/mta-sts/rpowell.co.uk       | /var/www/mta-sts.rpowell.co.uk                 | www-data:www-data  | 755 | 644 |
