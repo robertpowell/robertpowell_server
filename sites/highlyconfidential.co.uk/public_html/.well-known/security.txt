@@ -1,0 +1,5 @@
+# Security contact for highlyconfidential.co.uk (RFC 9116). Reports go through the contact form; no email address is published.
+Contact: https://highlyconfidential.co.uk/contact.php
+Expires: 2027-11-24T00:00:00Z
+Preferred-Languages: en
+Canonical: https://highlyconfidential.co.uk/.well-known/security.txt
