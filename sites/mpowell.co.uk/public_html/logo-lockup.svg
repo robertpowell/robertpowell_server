@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" width="320" height="64" role="img" aria-label="mpowell.co.uk">
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+  <path d="M18 46V19l14 17 14-17v27" fill="none" stroke="#e2e8f0" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="82" y="43" font-family="system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="600" letter-spacing="-0.6" fill="#0f172a">mpowell<tspan fill="#94a3b8" font-weight="500">.co.uk</tspan></text>
+</svg>

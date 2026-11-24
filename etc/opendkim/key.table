@@ -5,3 +5,4 @@ box2026._domainkey.ultrasecret.net           ultrasecret.net:box2026:/etc/opendk
 box2026._domainkey.highlyconfidential.co.uk  highlyconfidential.co.uk:box2026:/etc/opendkim/keys/highlyconfidential.co.uk/box2026.private
 box2026._domainkey.robertpowell.org          robertpowell.org:box2026:/etc/opendkim/keys/robertpowell.org/box2026.private
 box2026._domainkey.ittybit.co.uk             ittybit.co.uk:box2026:/etc/opendkim/keys/ittybit.co.uk/box2026.private
+box2026._domainkey.mpowell.co.uk             mpowell.co.uk:box2026:/etc/opendkim/keys/mpowell.co.uk/box2026.private
