@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 import markdown as md
 import nh3
 from flask import (Flask, abort, flash, g, redirect, render_template, request,
-                   session, url_for, Response)
+                   send_from_directory, session, url_for, Response)
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -416,6 +416,46 @@ def edit(post_id=None):
                            tags=", ".join(tags_for(row["id"])) if row else "")
 
 
+# ---------------------------------------------------------------- serving pictures
+
+# Pictures are served by the app, not straight from disk by Apache, so that a picture is only public
+# while a PUBLISHED post or page uses it (25 Nov 2026). Until then, and for anything uploaded but not
+# used, only the signed-in admin can load it; everyone else gets the same 404 as a file that does not
+# exist. The set of public pictures is rebuilt whenever the database file changes.
+_MEDIA_REF = re.compile(r"/media/([A-Za-z0-9][A-Za-z0-9._/%-]*)")
+_public_media = {"stamp": None, "files": frozenset()}
+
+
+def public_media():
+    try:
+        st = os.stat(DB)
+        stamp = (st.st_mtime_ns, st.st_size)
+    except OSError:
+        stamp = None
+    if stamp is None or stamp != _public_media["stamp"]:
+        from urllib.parse import unquote
+        found = set()
+        for (body,) in db().execute("SELECT body FROM posts WHERE status='published'"):
+            for ref in _MEDIA_REF.findall(body or ""):
+                found.add(unquote(ref).rstrip(").,"))
+        _public_media["files"], _public_media["stamp"] = frozenset(found), stamp
+    return _public_media["files"]
+
+
+@app.route("/media/<path:filename>")
+def media(filename):
+    admin = bool(session.get("admin"))
+    if not admin and filename not in public_media():
+        abort(404)
+    resp = send_from_directory(app.config["MEDIA_DIR"], filename, conditional=True)
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    if filename in public_media():
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+    else:                                   # admin previewing a draft: never let a cache keep it
+        resp.headers["Cache-Control"] = "private, no-store"
+    return resp
+
+
 # ---------------------------------------------------------------- image upload
 
 IMAGE_FORMATS = {"JPEG": ".jpg", "PNG": ".png", "GIF": ".gif", "WEBP": ".webp"}
@@ -537,13 +577,6 @@ def save_image(storage, post_id=None):
     rel_dir = now.strftime("%Y/%m")
     out_dir = os.path.join(app.config["MEDIA_DIR"], rel_dir)
     os.makedirs(out_dir, exist_ok=True)
-    # Apache serves /media/ directly as www-data; the service's umask would leave new month folders
-    # closed to it (pictures uploaded but 403 on the page, 25 Nov 2026). Open the year and month folders.
-    for d in (os.path.dirname(out_dir), out_dir):
-        try:
-            os.chmod(d, 0o755)
-        except OSError:
-            pass
     ext = IMAGE_FORMATS[fmt]
     name = f"{stem}-{secrets.token_hex(3)}{ext}"
     while os.path.exists(os.path.join(out_dir, name)):
