@@ -482,6 +482,13 @@ def save_image(storage, post_id=None):
     rel_dir = now.strftime("%Y/%m")
     out_dir = os.path.join(app.config["MEDIA_DIR"], rel_dir)
     os.makedirs(out_dir, exist_ok=True)
+    # Apache serves /media/ directly as www-data; the service's umask would leave new month folders
+    # closed to it (pictures uploaded but 403 on the page, 25 Nov 2026). Open the year and month folders.
+    for d in (os.path.dirname(out_dir), out_dir):
+        try:
+            os.chmod(d, 0o755)
+        except OSError:
+            pass
     ext = IMAGE_FORMATS[fmt]
     name = f"{stem}-{secrets.token_hex(3)}{ext}"
     while os.path.exists(os.path.join(out_dir, name)):
