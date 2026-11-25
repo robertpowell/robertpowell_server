@@ -16,6 +16,20 @@
     status.className = 'upl-status' + (err ? ' err' : '');
   }
 
+  /* While pictures are uploading, Save is held back: saving mid-upload left the page and lost the
+     picture (the post was saved without it). 25 Nov 2026. */
+  var form = ta.form;
+  var saveBtn = form ? form.querySelector('button[type="submit"]') : null;
+  var saveLabel = saveBtn ? saveBtn.textContent : '';
+  function setBusy(on) {
+    busy = on;
+    btn.disabled = on;
+    if (saveBtn) { saveBtn.disabled = on; saveBtn.textContent = on ? 'Uploading picture…' : saveLabel; }
+  }
+  if (form) form.addEventListener('submit', function (e) {
+    if (busy) { e.preventDefault(); say('Still uploading: wait for the picture to be added, then save.', true); }
+  });
+
   function insert(text) {
     var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
     var before = v.slice(0, s), after = v.slice(e);
@@ -28,9 +42,9 @@
   }
 
   function send(files) {
-    files = Array.prototype.filter.call(files, function (f) { return /^image\//.test(f.type); });
+    files = Array.prototype.filter.call(files, function (f) { return /^image\//.test(f.type) || /\.mpo$/i.test(f.name); });
     if (!files.length || busy) return;
-    busy = true;
+    setBusy(true);
     say('Uploading ' + files.length + ' image' + (files.length > 1 ? 's' : '') + '…');
     var fd = new FormData();
     files.forEach(function (f) { fd.append('images', f, f.name); });
@@ -49,7 +63,7 @@
         say(msg || 'Nothing uploaded', !!(j.error || (j.errors && j.errors.length)));
       })
       .catch(function () { say('Upload failed: network error', true); })
-      .then(function () { busy = false; input.value = ''; });
+      .then(function () { setBusy(false); input.value = ''; });
   }
 
   btn.addEventListener('click', function () { input.click(); });
