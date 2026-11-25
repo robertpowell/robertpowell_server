@@ -149,7 +149,7 @@ logpath  = /var/log/apache2/highlyconfidential.co.uk-access.log
            /var/log/apache2/robertpowell.net-access.log
            /var/log/apache2/rpowell.co.uk-access.log
            /var/log/apache2/ultrasecret.net-access.log
-           /var/log/apache2/new.robertpowell.com-access.log
+           /var/log/apache2/robertpowell.com-access.log
            /var/log/apache2/robertpowell.org-access.log
            /var/log/apache2/ittybit.co.uk-access.log
 findtime = 1h
@@ -163,7 +163,7 @@ enabled  = true
 backend  = auto
 filter   = blog-login
 port     = http,https
-logpath  = /var/log/apache2/new.robertpowell.com-access.log
+logpath  = /var/log/apache2/robertpowell.com-access.log
 findtime = 10m
 maxretry = 5
 bantime  = 1h

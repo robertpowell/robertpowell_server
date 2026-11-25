@@ -28,7 +28,7 @@ app.config.update(
     ADMIN_PASSWORD_HASH=os.environ.get("BLOG_ADMIN_HASH", ""),
     SITE_NAME=os.environ.get("BLOG_SITE_NAME", "RobertPowell.com"),
     SITE_TAGLINE=os.environ.get("BLOG_TAGLINE", "The wonderful world of RoPo."),
-    SITE_URL=os.environ.get("BLOG_SITE_URL", "https://new.robertpowell.com"),
+    SITE_URL=os.environ.get("BLOG_SITE_URL", "https://robertpowell.com"),
     PER_PAGE=15,
     SESSION_COOKIE_SECURE=True,       # admin session cookie only over https
     SESSION_COOKIE_HTTPONLY=True,
@@ -276,6 +276,12 @@ def page(slug):
         abort(404)
     row = db().execute("SELECT * FROM posts WHERE slug=? AND kind='page'",
                        (slug,)).fetchone()
+    if row is None:
+        # WordPress served posts at /<slug>/; send those old addresses to /p/<slug>/ (flip, 25 Nov 2026).
+        old = db().execute("SELECT slug FROM posts WHERE slug=? AND kind='post' AND status='published'",
+                           (slug,)).fetchone()
+        if old is not None:
+            return redirect(url_for("post", slug=old["slug"]), code=301)
     if row is None or (row["status"] != "published" and not session.get("admin")):
         abort(404)
     return render_template("page.html", post=row,

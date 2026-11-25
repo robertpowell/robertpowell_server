@@ -11,4 +11,4 @@
 
 [apache-custom]
 logpath  = /var/log/apache2/access.log
-           /var/log/apache2/new.robertpowell.com-access.log
+           /var/log/apache2/robertpowell.com-access.log

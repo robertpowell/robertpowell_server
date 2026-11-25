@@ -41,10 +41,10 @@ const SITES = [
         'data' => '/var/www/ittybit.co.uk/data',
         'logo' => 'https://ittybit.co.uk/logo-mark-512.png', 'accent' => '#0f172a',
     ],
-    'new.robertpowell.com' => [
-        'name' => 'robertpowell.com', 'url' => 'https://new.robertpowell.com',
+    'robertpowell.com' => [
+        'name' => 'robertpowell.com', 'url' => 'https://robertpowell.com',
         'recipient' => 'mail@robertpowell.com', 'sender' => 'server@robertpowell.com',
-        'data' => '/var/www/shared/contact/data/new.robertpowell.com', 'logo' => '', 'accent' => '#a3571a',
+        'data' => '/var/www/shared/contact/data/robertpowell.com', 'logo' => '', 'accent' => '#a3571a',
     ],
 ];
 

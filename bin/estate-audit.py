@@ -39,7 +39,7 @@ SPF_KNOWN = {"ip4:178.62.75.145", "ip4:188.166.137.38", "ip6:2a03:b0c0:1:e0:0:1:
 # Known and accepted: (zone regex, message regex, why). These show in the weekly report as accepted,
 # never as failures. Delete a line when its reason goes away.
 ACCEPTED = [
-    (r"robertpowell\.com", r"(^|www\.|veritypowell\.)robertpowell\.com: no HSTS", "still on cPanel until the ROP-23 flip"),
+    (r"robertpowell\.com", r"veritypowell\.robertpowell\.com: no HSTS", "cPanel scaffolding hosts for Verity's sites"),
 ]
 
 TOKEN = [l.split("=", 1)[1].strip() for l in open(CF_INI) if "dns_cloudflare_api_token" in l][0]

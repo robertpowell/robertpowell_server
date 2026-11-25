@@ -13,7 +13,7 @@ sites/robertpowell.org/lib        | /var/www/robertpowell.org/lib               
 sites/ittybit.co.uk               | /var/www/ittybit.co.uk                         | root:root          | 755 | 644 | data/
 sites/ittybit.co.uk/lib           | /var/www/ittybit.co.uk/lib                     | root:www-data      | 750 | 640 |
 sites/mpowell.co.uk               | /var/www/mpowell.co.uk                         | root:root          | 755 | 644 |
-sites/new.robertpowell.com        | /var/www/new.robertpowell.com                  | www-data:www-data  | 755 | 644 |
+sites/robertpowell.com            | /var/www/robertpowell.com                      | www-data:www-data  | 755 | 644 |
 sites/mta-sts/highlyconfidential.co.uk | /var/www/mta-sts.highlyconfidential.co.uk | www-data:www-data  | 755 | 644 |
 sites/mta-sts/ittybit.co.uk       | /var/www/mta-sts.ittybit.co.uk                 | www-data:www-data  | 755 | 644 |
 sites/mta-sts/robertpowell.org    | /var/www/mta-sts.robertpowell.org              | www-data:www-data  | 755 | 644 |

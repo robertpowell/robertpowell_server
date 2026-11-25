@@ -1,5 +1,0 @@
-# Security contact for new.robertpowell.com (RFC 9116). Reports go through the contact form; no email address is published.
-Contact: https://new.robertpowell.com/contact.php
-Expires: 2027-11-24T00:00:00Z
-Preferred-Languages: en
-Canonical: https://new.robertpowell.com/.well-known/security.txt

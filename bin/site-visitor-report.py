@@ -35,7 +35,7 @@ SKIP_EMPTY = True
 
 # label, log file, include in the report?
 SITES = [
-    ("robertpowell.com",        "new.robertpowell.com-access.log",      True),
+    ("robertpowell.com",        "robertpowell.com-access.log",          True),
     ("robertpowell.net",        "robertpowell.net-access.log",          True),
     ("rpowell.co.uk",           "rpowell.co.uk-access.log",             True),
     ("ultrasecret.net",         "ultrasecret.net-access.log",           True),
@@ -52,7 +52,7 @@ OUTBOUND = {}
 MACHINE_LOG = "other_vhosts_access.log"
 # Where each site's contact form logs accepted messages (submissions.jsonl, one JSON object per line).
 CONTACT_DATA = {
-    "robertpowell.com":         "/var/www/shared/contact/data/new.robertpowell.com",
+    "robertpowell.com":         "/var/www/shared/contact/data/robertpowell.com",
     "robertpowell.net":         "/var/www/shared/contact/data/robertpowell.net",
     "rpowell.co.uk":            "/var/www/shared/contact/data/rpowell.co.uk",
     "ultrasecret.net":          "/var/www/shared/contact/data/ultrasecret.net",

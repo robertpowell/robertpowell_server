@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require '/var/www/shared/contact/page-helpers.php';
-$token = contact_entry('new.robertpowell.com');
+$token = contact_entry('robertpowell.com');
 require __DIR__ . '/theme.inc.php';
 $theme['title'] = 'Contact — RobertPowell.com';
 $theme['tagline'] = 'Send a message';
