@@ -25,6 +25,8 @@ $e = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'
   header.ph { text-align:center; margin-bottom:1.5rem; }
   header.ph.band { background:var(--band,#343a40); padding:2.2rem 1rem; border-radius:14px; }
   .mark { width:64px; height:64px; margin:0 auto 1rem; display:block; border-radius:14px; }
+  a.home { display:table; margin:0 auto 1rem; border-radius:14px; }
+  a.home .mark { margin:0; }
   h1 { font-size:clamp(1.4rem,4vw,2rem); font-weight:600; letter-spacing:-.02em; margin:0 0 .25rem; }
   h1 .tld { color:var(--muted); font-weight:500; }
   h1 .pill { display:inline-block; color:#fff; background:var(--accent); padding:.25rem 1rem; border-radius:6px; }
@@ -49,7 +51,7 @@ $e = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'
 <body>
 <main>
   <header class="ph <?= $e($theme['header_class'] ?? '') ?>">
-    <?= $theme['logo_html'] ?? '' ?>
+    <?php if (!empty($theme['logo_html'])): ?><a class="home" href="/" aria-label="Home page"><?= $theme['logo_html'] ?></a><?php endif; ?>
     <h1><?= $theme['site_html'] ?></h1>
     <?php if (!empty($theme['tagline'])): ?><p><?= $theme['tagline'] ?></p><?php endif; ?>
   </header>
