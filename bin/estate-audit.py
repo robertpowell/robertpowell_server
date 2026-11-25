@@ -39,7 +39,6 @@ SPF_KNOWN = {"ip4:178.62.75.145", "ip4:188.166.137.38", "ip6:2a03:b0c0:1:e0:0:1:
 # Known and accepted: (zone regex, message regex, why). These show in the weekly report as accepted,
 # never as failures. Delete a line when its reason goes away.
 ACCEPTED = [
-    (r".*", r"no IPv6 address", "IPv4 only on purpose: the home-address allowlist is IPv4"),
     (r"robertpowell\.com", r"(^|www\.|veritypowell\.)robertpowell\.com: no HSTS", "still on cPanel until the ROP-23 flip"),
     (r"robertpowell\.com", r"SPF authorises unknown sender ip4:85\.118\.236\.3", "cPanel still sends this domain's WordPress mail"),
 ]
@@ -300,14 +299,14 @@ def classify(rows):
     return f, a, p
 
 
-AREAS = ["Zone", "DNSSEC", "CAA", "Web", "Certificates", "MX", "SPF", "DMARC", "DKIM", "MTA-STS", "TLS-RPT", "Named hosts", "Records"]
+AREAS = ["Zone", "DNSSEC", "CAA", "Web", "IPv6", "Certificates", "MX", "SPF", "DMARC", "DKIM", "MTA-STS", "TLS-RPT", "Named hosts", "Records"]
 
 
 def render(rows, zones, weekly):
     fails, acc, passes = classify(rows)
     e = html.escape
     day = datetime.datetime.now().strftime("%A %-d %B %Y")
-    nchecks = len({(z, a) for z, a, _, _ in rows if a != "IPv6"})
+    nchecks = len({(z, a) for z, a, _, _ in rows })
     if fails:
         subject = f"Estate check: {len(fails)} problem{'s' if len(fails) != 1 else ''} on {len({f[0] for f in fails})} domain{'s' if len({f[0] for f in fails}) != 1 else ''}"
         colour, head = "#b91c1c", f"{len(fails)} problem{'s' if len(fails) != 1 else ''} found"
@@ -348,7 +347,7 @@ def render(rows, zones, weekly):
             out.append(f'<tr><td colspan="2" bgcolor="#f1f5f9" style="{td};font-weight:600">{e(z)}</td></tr>')
             text.append(f"\n{z}")
             for zz, a, m in passes:
-                if zz == z and a != "IPv6":
+                if zz == z:
                     out.append(f'<tr><td style="{td};white-space:nowrap;color:#64748b">{e(a)}</td><td style="{td}">{e(m)}</td></tr>')
                     text.append(f"  ok       {a}: {m}")
             for zz, a, m, _ in fails:
