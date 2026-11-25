@@ -415,10 +415,16 @@ def save_image(storage, post_id=None):
     except (UnidentifiedImageError, OSError):
         raise ValueError(f"{storage.filename or 'file'} is not a jpeg, png, gif or webp image")
     fmt = img.format
+    # MPO is what phones and cameras write for a JPEG with a second embedded picture (depth map, gain
+    # map, 3D pair). The first frame is the photo: keep that and store it as an ordinary JPEG.
+    mpo = fmt == "MPO"
+    if mpo:
+        img.seek(0)
+        fmt = "JPEG"
     if fmt not in IMAGE_FORMATS:
         raise ValueError(f"{fmt or 'unknown'} images are not accepted")
     taken = _exif_taken_at(img)
-    animated = getattr(img, "is_animated", False)
+    animated = False if mpo else getattr(img, "is_animated", False)
     if not animated:
         img = ImageOps.exif_transpose(img)
         w = app.config["UPLOAD_MAX_WIDTH"]
