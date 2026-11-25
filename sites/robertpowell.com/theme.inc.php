@@ -10,5 +10,7 @@ $theme = [
   'vars_dark'  => '--bg:#14130f; --fg:#ece7de; --muted:#a7a196; --line:#2c2822; --card:#1c1a16; --field:#14130f; --accent:#f0a55e; --ok:#4ade80; --bad:#f87171; --track:#2c2822; --knob:#f0a55e; --knobfg:#1b1a18; --mk-tile:#38456b; --mk-line:#f4f6fa; --mk-o:#f7b876;',
   // follow the blog's own theme toggle (stored in localStorage by base.html)
   'head_extra' => "<script>(function(){try{var t=localStorage.getItem('ropo_theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>\n<link rel=\"icon\" href=\"/static/favicon.svg\" type=\"image/svg+xml\">",
+  // Same width as the blog pages: 90% of the window on desktop, full width on phones (25 Nov 2026).
+  'measure' => 'max(34rem, 90vw)',
   'footer_links' => [['/', 'Home'], ['/archive/', 'Archive'], ['/privacy.php', 'Privacy']],
 ];
