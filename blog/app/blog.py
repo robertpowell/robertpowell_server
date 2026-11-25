@@ -226,7 +226,14 @@ def index():
         "ORDER BY published_at DESC, id DESC LIMIT ? OFFSET ?",
         (per + 1, (page - 1) * per)).fetchall()
     more = len(rows) > per
-    return render_template("index.html", posts=rows[:per], page=page, more=more)
+    posts = rows[:per]
+    # Front page only: the newest post is shown in full, the rest stay a list of titles (RP, 25 Nov 2026).
+    latest = latest_html = latest_tags = None
+    if page == 1 and posts:
+        latest, posts = posts[0], posts[1:]
+        latest_html, latest_tags = render_markdown(latest["body"]), tags_for(latest["id"])
+    return render_template("index.html", posts=posts, page=page, more=more, latest=latest,
+                           latest_html=latest_html, latest_tags=latest_tags)
 
 
 @app.route("/p/<slug>/")

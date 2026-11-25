@@ -1,8 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">{{ heading or tagline }}</h1>
-{% if not posts %}
+{% if not posts and not latest %}
   <p class="empty">Nothing published yet.</p>
+{% endif %}
+{% if latest %}
+<article class="entry latest">
+  <header>
+    <h2><a href="{{ url_for('post', slug=latest['slug']) }}">{{ latest['title'] or 'Untitled' }}</a></h2>
+    <time datetime="{{ latest['published_at'] }}">{{ latest['published_at']|pretty_date }}</time>
+  </header>
+  <div class="body">{{ latest_html|safe }}</div>
+  {% if latest_tags %}
+  <p class="tags">{% for t in latest_tags %}<a href="{{ url_for('tag', name=t) }}">{{ t }}</a>{% endfor %}</p>
+  {% endif %}
+</article>
+{% if posts %}<h2 class="earlier">Earlier posts</h2>{% endif %}
 {% endif %}
 <ul class="posts">
 {% for p in posts %}

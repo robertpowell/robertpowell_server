@@ -67,6 +67,14 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
 .entry h1{font-size:1.62rem;font-weight:650;letter-spacing:-.025em;line-height:1.16;
   margin:0 0 .5rem;text-wrap:balance}
 .entry header time{font-family:var(--fm);font-size:.72rem;color:var(--faint)}
+/* Front page: the newest post shown in full above the list of earlier ones. */
+.entry.latest h2{font-size:1.62rem;font-weight:650;letter-spacing:-.025em;line-height:1.16;
+  margin:0 0 .5rem;text-wrap:balance}
+.entry.latest h2 a{color:var(--ink);text-decoration:none}
+.entry.latest h2 a:hover{color:var(--accent)}
+.entry.latest{margin-bottom:2.6rem}
+.earlier{font-family:var(--fm);font-size:.72rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--faint);margin:0 0 .3rem;padding-top:1.4rem;border-top:1px solid var(--rule)}
 .badge{display:inline-block;font-family:var(--fm);font-size:.62rem;letter-spacing:.1em;
   text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);
   padding:.08rem .4rem;border-radius:2px;margin:0 0 .7rem}
