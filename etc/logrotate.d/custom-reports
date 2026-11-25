@@ -1,0 +1,16 @@
+# Logs for the cron jobs whose output was previously mailed to root@ and
+# rejected by Fastmail (551 - root@ is not an authorised sending identity).
+# Redirected to files 2026-08-25; rotate so they do not grow unbounded.
+/var/log/nda-tests.log
+/var/log/apt-maintenance.log
+/var/log/estate-audit.log
+{
+    su root syslog
+    weekly
+    rotate 157
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root adm
+}
