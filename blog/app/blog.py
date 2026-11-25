@@ -38,7 +38,9 @@ app.config.update(
     MAX_CONTENT_LENGTH=40 * 1024 * 1024,   # whole upload request; per-file cap is UPLOAD_MAX_BYTES
     MEDIA_DIR=os.environ.get("BLOG_MEDIA_DIR", os.path.join(os.path.dirname(DB), "media")),
     UPLOAD_MAX_BYTES=20 * 1024 * 1024,
-    UPLOAD_MAX_WIDTH=1600,
+    UPLOAD_MAX_WIDTH=1600,                 # longest side of a stored picture, in pixels
+    UPLOAD_WEBP_QUALITY=80,
+    WATERMARK_NAME="Robert Powell",
 )
 
 
@@ -440,6 +442,45 @@ def _exif_taken_at(img):
     return None
 
 
+WATERMARK_FONTS = ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                   "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+                   "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+
+
+def _watermark(img):
+    """'© Robert Powell <year of upload>' in the bottom-right corner, white on a dark patch of the
+    picture or near-black on a light one, with a thin outline of the opposite shade so it stays
+    readable on a busy background. RGB in, RGB out."""
+    from PIL import ImageDraw, ImageFont, ImageStat
+    name = app.config.get("WATERMARK_NAME")
+    if not name or min(img.size) < 240:                 # too small to carry it legibly
+        return img
+    text = f"\u00a9 {name} {datetime.now(UK).year}"
+    size = max(13, round(max(img.size) * 0.018))
+    font = None
+    for path in WATERMARK_FONTS:
+        try:
+            font = ImageFont.truetype(path, size)
+            break
+        except OSError:
+            continue
+    if font is None:
+        return img
+    draw = ImageDraw.Draw(img)
+    stroke = max(1, size // 12)
+    l, t, r, b = draw.textbbox((0, 0), text, font=font, stroke_width=stroke)
+    tw, th = r - l, b - t
+    pad = round(size * 0.9)
+    x, y = img.width - tw - pad - l, img.height - th - pad - t
+    if x < pad:                                          # narrow picture: text would not fit
+        return img
+    box = (max(0, x + l - 4), max(0, y + t - 4), min(img.width, x + r + 4), min(img.height, y + b + 4))
+    lum = ImageStat.Stat(img.crop(box).convert("L")).mean[0]
+    fill, edge = ((255, 255, 255), (0, 0, 0)) if lum < 140 else ((20, 20, 20), (255, 255, 255))
+    draw.text((x, y), text, font=font, fill=fill, stroke_width=stroke, stroke_fill=edge)
+    return img
+
+
 def save_image(storage, post_id=None):
     """Validate, orient, resize, strip metadata, store under MEDIA_DIR/YYYY/MM. Returns a dict."""
     from PIL import Image, ImageOps, UnidentifiedImageError
@@ -471,11 +512,25 @@ def save_image(storage, post_id=None):
         raise ValueError(f"{fmt or 'unknown'} images are not accepted")
     taken = _exif_taken_at(img)
     animated = False if mpo else getattr(img, "is_animated", False)
+    has_alpha = False
     if not animated:
         img = ImageOps.exif_transpose(img)
+        # Cap the LONGEST side (was width only, so tall portrait photos stayed huge). 25 Nov 2026.
         w = app.config["UPLOAD_MAX_WIDTH"]
-        if img.width > w:
-            img = img.resize((w, round(img.height * w / img.width)), Image.LANCZOS)
+        if max(img.size) > w:
+            k = w / max(img.size)
+            img = img.resize((max(1, round(img.width * k)), max(1, round(img.height * k))), Image.LANCZOS)
+        has_alpha = img.mode in ("RGBA", "LA", "PA") or "transparency" in img.info
+        if has_alpha:
+            ex = img.convert("RGBA").getchannel("A").getextrema()
+            has_alpha = ex[0] < 255                     # an alpha channel that is fully opaque does not count
+        # Stills are stored as WebP (about a fifth smaller than JPEG at the same look). Only a picture
+        # with real transparency stays PNG; animations are kept exactly as uploaded.
+        if not has_alpha:
+            img = _watermark(img.convert("RGB"))
+            fmt = "WEBP"
+        else:
+            fmt = "PNG"
 
     stem = slugify(os.path.splitext(storage.filename or "")[0], fallback="image")[:40]
     now = datetime.now(timezone.utc)
@@ -503,7 +558,7 @@ def save_image(storage, post_id=None):
     elif fmt == "PNG":
         img.save(path, "PNG", optimize=True)            # save() without exif= drops metadata
     elif fmt == "WEBP":
-        img.save(path, "WEBP", quality=85, method=4)
+        img.save(path, "WEBP", quality=app.config["UPLOAD_WEBP_QUALITY"], method=6)
     else:
         img.save(path, "GIF")
     os.chmod(path, 0o644)
