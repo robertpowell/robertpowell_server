@@ -198,3 +198,24 @@ a.cancel:hover,button.cancel:hover{border-color:var(--accent);color:var(--accent
 /* Footer admin link: as quiet as the copyright line it sits in. */
 .foot a{color:inherit;text-decoration:none}
 .foot a:hover{text-decoration:underline}
+
+/* Phone layout (25 Nov 2026): the navigation and the text-size / theme controls fold behind a hamburger
+   button, so the header never makes the page wider than the screen. Only when scripts run (.js on <html>):
+   without them the menu stays open as a plain list. */
+.menu-btn{display:none;background:none;border:1px solid var(--rule2);border-radius:6px;color:var(--ink);
+  padding:.3rem .42rem;cursor:pointer;line-height:0}
+.menu-btn:hover{color:var(--accent);border-color:var(--accent)}
+@media(max-width:760px){
+  html,body{overflow-x:hidden}
+  .bar{align-items:center;flex-wrap:wrap;padding:1rem 1.25rem}
+  .js .menu-btn{display:inline-block}
+  .bar nav{flex-basis:100%;flex-direction:column;align-items:stretch;gap:0;font-size:.8rem}
+  .js .bar nav{display:none}
+  .js .bar.open nav{display:flex}
+  .bar nav a{padding:.75rem 0;border-top:1px solid var(--rule)}
+  .bar nav .ctl{margin:.9rem 0 .2rem;align-self:flex-start}
+  .bar nav .ctl button{padding:.5rem .8rem;font-size:.68rem}
+  .bar nav .ctl .sz button{font-size:.95rem}
+  .body pre,.body table{max-width:100%;overflow-x:auto}
+  .body{overflow-wrap:anywhere}
+}

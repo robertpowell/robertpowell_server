@@ -5,6 +5,7 @@
 /* 1. Pre-paint: apply the stored theme and size before anything renders. */
 (function(){try{var t=localStorage.getItem('ropo_theme');
 if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);
+document.documentElement.classList.add('js');
 var z=localStorage.getItem('ropo_size');
 if(z&&z!=='m')document.documentElement.setAttribute('data-size',z);}catch(e){}})();
 
@@ -54,4 +55,17 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   if(reset) reset.addEventListener('click',function(){ sPaint(DEF); });
   sPaint(sIndex());
+});
+
+/* 4. Phone menu: the hamburger button opens and closes the navigation and controls (25 Nov 2026). */
+document.addEventListener('DOMContentLoaded',function(){
+  var btn=document.querySelector('.menu-btn'), bar=document.querySelector('.bar');
+  if(!btn||!bar) return;
+  btn.addEventListener('click',function(){
+    var open=bar.classList.toggle('open');
+    btn.setAttribute('aria-expanded', String(open));
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&bar.classList.contains('open')){bar.classList.remove('open');btn.setAttribute('aria-expanded','false');btn.focus();}
+  });
 });

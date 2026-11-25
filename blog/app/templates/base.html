@@ -25,7 +25,10 @@
       </svg>
       <span>{{ site }}</span>
     </a>
-    <nav>
+    <button type="button" class="menu-btn" aria-expanded="false" aria-controls="site-nav" aria-label="Menu">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <nav id="site-nav">
       <a href="{{ url_for('archive') }}">Archive</a>
       {% for pg in pages %}<a href="{{ url_for('page', slug=pg['slug']) }}">{{ pg['title'] }}</a>{% endfor %}
       <a href="{{ url_for('feed') }}">Feed</a>
