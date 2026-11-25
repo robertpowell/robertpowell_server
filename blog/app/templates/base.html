@@ -54,7 +54,7 @@
 <main id="main">{% block content %}{% endblock %}</main>
 <footer class="foot">
   <p>{{ tagline }}</p>
-  <p class="dim">&copy; Robert Powell {{ now.year }}</p>
+  <p class="dim">&copy; Robert Powell {{ now.year }} &middot; <a href="{{ url_for('admin') }}" rel="nofollow">Admin</a></p>
 </footer>
 </body>
 </html>

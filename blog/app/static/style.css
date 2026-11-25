@@ -194,3 +194,7 @@ a.cancel:hover,button.cancel:hover{border-color:var(--accent);color:var(--accent
 .upl-status{font-family:var(--fm);font-size:.75rem;color:var(--muted)}
 .upl-status.err{color:#a3352f}
 #body.drop{outline:2px dashed var(--accent);outline-offset:-2px}
+
+/* Footer admin link: as quiet as the copyright line it sits in. */
+.foot a{color:inherit;text-decoration:none}
+.foot a:hover{text-decoration:underline}
