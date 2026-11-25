@@ -447,7 +447,7 @@ WATERMARK_FONTS = ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
                    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
 
 
-def _watermark(img):
+def _watermark(img, year=None):
     """'© Robert Powell <year of upload>' in the bottom-right corner, white on a dark patch of the
     picture or near-black on a light one, with a thin outline of the opposite shade so it stays
     readable on a busy background. RGB in, RGB out."""
@@ -455,7 +455,7 @@ def _watermark(img):
     name = app.config.get("WATERMARK_NAME")
     if not name or min(img.size) < 240:                 # too small to carry it legibly
         return img
-    text = f"\u00a9 {name} {datetime.now(UK).year}"
+    text = f"\u00a9 {name} {year or datetime.now(UK).year}"
     size = max(13, round(max(img.size) * 0.018))
     font = None
     for path in WATERMARK_FONTS:
