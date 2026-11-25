@@ -11,6 +11,7 @@ import sqlite3
 import unicodedata
 from datetime import datetime, timedelta, timezone
 from functools import wraps
+from zoneinfo import ZoneInfo
 
 import markdown as md
 import nh3
@@ -205,14 +206,50 @@ def check_csrf():
             abort(400, "Form expired or missing its token. Reload the page and try again.")
 
 
+# Dates are stored in UTC and shown in UK time, GMT or BST as the calendar says (25 Nov 2026).
+UK = ZoneInfo("Europe/London")
+
+
+def to_uk(value):
+    """Stored 'YYYY-MM-DD HH:MM:SS' (UTC) -> aware datetime in UK time, or None."""
+    try:
+        return datetime.strptime(value[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).astimezone(UK)
+    except (ValueError, TypeError):
+        return None
+
+
+def from_uk(text):
+    """What was typed in the editor's Date box (UK time) -> stored UTC string. '' if unreadable."""
+    text = (text or "").strip().replace("T", " ")
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            local = datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+        if fmt == "%Y-%m-%d":
+            local = local.replace(hour=12)          # a bare date means midday, safely inside that day
+        return local.replace(tzinfo=UK).astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    return ""
+
+
 @app.template_filter("pretty_date")
 def pretty_date(value):
     if not value:
         return ""
+    d = to_uk(value)
+    if d is not None:
+        return d.strftime("%-d %B %Y")
     try:
         return datetime.strptime(value[:10], "%Y-%m-%d").strftime("%-d %B %Y")
     except ValueError:
         return value[:10]
+
+
+@app.template_filter("uk_datetime")
+def uk_datetime(value):
+    """For the editor's Date box and the admin list: UK wall-clock time."""
+    d = to_uk(value) if value else None
+    return d.strftime("%Y-%m-%d %H:%M:%S") if d else (value or "")
 
 
 # ---------------------------------------------------------------- public
@@ -346,7 +383,11 @@ def edit(post_id=None):
         body = request.form.get("body", "")
         status = "published" if request.form.get("status") == "published" else "draft"
         tags_raw = request.form.get("tags", "")
-        when = request.form.get("published_at", "").strip()
+        typed = request.form.get("published_at", "").strip()
+        when = from_uk(typed)                    # the box is in UK time; storage is UTC
+        if typed and not when:
+            flash("Date not understood, so it was left as it was. Use YYYY-MM-DD HH:MM.")
+            when = (row["published_at"] if row is not None else "") or ""
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
         if status == "published" and not when:
@@ -419,6 +460,11 @@ def save_image(storage, post_id=None):
     # map, 3D pair). The first frame is the photo: keep that and store it as an ordinary JPEG.
     mpo = fmt == "MPO"
     if mpo:
+        try:
+            extra = [(e.get("Attribute", {}).get("MPType"), e.get("Size")) for e in (img.mpinfo.get(0xB002) or [])]
+            app.logger.warning("MPO upload %s: %d frames, %s", storage.filename, getattr(img, "n_frames", 1), extra)
+        except Exception:
+            pass
         img.seek(0)
         fmt = "JPEG"
     if fmt not in IMAGE_FORMATS:

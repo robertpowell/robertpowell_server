@@ -11,7 +11,7 @@
 {% for p in posts %}
 <tr>
   <td><a href="{{ url_for('edit', post_id=p['id']) }}">{{ p['title'] or 'Untitled' }}</a></td>
-  <td class="mono">{{ (p['published_at'] or p['created_at'])[:10] }}</td>
+  <td class="mono">{{ ((p['published_at'] or p['created_at'])|uk_datetime)[:10] }}</td>
   <td><span class="st {{ p['status'] }}">{{ p['status'] }}</span></td>
   <td class="right"><a href="{{ url_for('post', slug=p['slug']) }}">View</a></td>
 </tr>
