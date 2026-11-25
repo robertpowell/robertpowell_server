@@ -1,0 +1,6 @@
+# Estate audit (25 Nov 2026, RP): every Cloudflare zone on both boxes checked from outside: nameservers, DNSSEC, CAA,
+# HTTPS + certificates, MX/SPF/DMARC/DKIM/MTA-STS/TLS-RPT. Read-only. Emails only when a check fails (confirmed by a
+# re-test), plus the full report every Monday. 07:15 UTC, clear of the 05:20 reboot slot and the 08:00 visitor reports.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+15 7 * * * root /usr/bin/timeout 1500 /usr/local/bin/estate-audit.py >> /var/log/estate-audit.log 2>&1
