@@ -301,7 +301,8 @@ def read(path, want_vhost=None):
                 continue
             d["dt"] = ts
             d["bot"] = bool(BOT.search(d["ua"])) or d["ua"] in ("-", "")
-            d["asset"] = bool(ASSET.search(d["path"]))
+            # test the address without its query string: /static/style.css?v=123 is a file, not a page
+            d["asset"] = bool(ASSET.search(d["path"].split("?", 1)[0]))
             rows.append(d)
     return rows
 
@@ -373,7 +374,7 @@ def visitors_for(rows, gcache, pcc, home, known, bans=frozenset()):
         g = gcache.get(ip, {})
         v = {"ip": ip, "hits": len(pg) or len(hits),
              "last": max(r["dt"] for r in hits),
-             "paths": [r["path"] for r in pg][:5],
+             "paths": [(r["path"], r.get("status") if r.get("status") in GONE else "") for r in pg][:5],
              "city": g.get("city", ""), "zip": g.get("zip", ""),
              "country": g.get("country", ""), "cc": g.get("countryCode", ""),
              "isp": g.get("isp", ""), "lat": g.get("lat"), "lon": g.get("lon"),
@@ -402,6 +403,57 @@ def visitors_for(rows, gcache, pcc, home, known, bans=frozenset()):
     return out, pages, [r for r in rows if r["bot"]]
 
 
+# Phone layout (added 2026-11-28). The page was a fixed 650 px desktop table: seven summary tiles in one
+# row and five-column visitor tables could not shrink below 500-650 px, so on a portrait iPhone the mail
+# app scaled or clipped the sections. Below 600 px: tiles wrap into full-width rows, visitor tables become
+# one stacked card per visitor, other tables get tighter padding and may break long words.
+# Desktop is untouched: every rule lives inside the media query; a client that drops <style> shows the
+# desktop layout exactly as before.
+MOBILE_CSS = """<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media only screen and (max-width:600px){
+ .wrap{padding:14px 8px !important}
+ .tiles{table-layout:fixed !important}
+ .tiles td.gap{width:3px !important}
+ .tiles td.tile{padding:10px 1px 8px 1px !important;vertical-align:top !important}
+ .tiles .tn{font-size:19px !important}
+ .tiles .tl{font-size:8px !important;letter-spacing:0 !important;word-break:break-word !important}
+ .sec>tbody>tr>td,.sec>tbody>tr>th{padding-left:8px !important;padding-right:8px !important}
+ .sec>tbody>tr>td{word-break:break-word !important;overflow-wrap:anywhere !important}
+ .cards,.cards>tbody{display:block !important;width:auto !important}
+ .cards>tbody>tr.hd{display:none !important}
+ .cards>tbody>tr{display:block !important;display:flex !important;flex-wrap:wrap !important;align-items:baseline !important;
+  box-sizing:border-box !important;padding:8px 10px 4px 10px !important;border-bottom:1px solid #e4e0d9 !important}
+ .cards>tbody>tr>td{display:block !important;width:auto !important;box-sizing:border-box !important;
+  padding:0 0 3px 0 !important;border:0 !important;text-align:left !important;white-space:normal !important;
+  word-break:break-word !important;overflow-wrap:anywhere !important}
+ .cards td.c-when{order:1 !important;margin-right:8px !important}
+ .cards td.c-when div{display:none !important}
+ .cards td.c-who{order:2 !important;flex:1 1 calc(100% - 140px) !important;min-width:0 !important}
+ .cards td.c-who div{display:inline !important;margin-left:5px !important}
+ .cards td.c-hits{order:3 !important;margin-left:8px !important;font-size:13px !important;white-space:nowrap !important}
+ .cards td.c-dist{order:4 !important;flex:0 0 auto !important;margin-right:10px !important;white-space:nowrap !important}
+ .cards td.c-dist div{display:inline !important;margin:0 4px 0 0 !important}
+ .cards .bar{display:none !important}
+ .cards td.c-net{order:5 !important;flex:1 1 0 !important;min-width:0 !important}
+ .cards td.c-net .brk br{display:none !important}
+ .cards td.c-net .brk span{margin-right:8px !important}
+ .m{display:inline !important}
+ .brk,.brk span,.brk a{word-break:break-all !important}
+}
+</style>"""
+
+
+# Visitor list (RP, 28 Nov 2026): busiest first, and only visitors with at least this many page views.
+# Your own addresses and anyone within NEAR_KM are always listed, however few pages they read; the
+# rest are counted in the tiles and summed in a line under the table.
+MIN_HITS = 5
+NOT_FOUND_ROWS = 12   # rows in the "Not found" table
+SERVED = ("200", "206", "304")   # counts towards "Most read"
+GONE = ("404", "410")            # tagged in visitor rows and listed under "Not found"
+
+
 def rows_html(vis, empty="No human visitors in the last 24 hours."):
     out = []
     for v in vis:
@@ -409,7 +461,7 @@ def rows_html(vis, empty="No human visitors in the last 24 hours."):
         d = v.get("dist")
         dtxt = ("0 km" if v.get("known") else
                 (f"{d:.0f} km" if d is not None and d >= 1 else ("<1 km" if d is not None else "—")))
-        bar = (f'<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:4px;'
+        bar = (f'<table class="bar" width="100%" cellpadding="0" cellspacing="0" style="margin-top:4px;'
                f'background:{RULE};height:5px;border-radius:3px"><tr>'
                f'<td width="{w}%" style="background:{col};height:5px;border-radius:3px;'
                f'font-size:0;line-height:0">&nbsp;</td><td style="font-size:0;line-height:0">'
@@ -433,21 +485,26 @@ def rows_html(vis, empty="No human visitors in the last 24 hours."):
                       f'color:#fff;background:{"#b3541f" if f=="hosting" else INDIGO};'
                       f'padding:1px 5px;border-radius:2px;margin-left:4px">{f}</span>'
                       for f in v["flags"])
-        paths = "<br>".join(f'<span style="color:{MUT}">{esc(p[:44])}</span>' for p in v["paths"]) or "—"
+        # an address that does not exist (the server answered 404) carries a small red tag
+        nf = lambda code: f'&nbsp;<b style="font:600 9px ui-monospace,monospace;color:#b3261e">{code}</b>' if code else ""
+        paths = "<br>".join(f'<span style="color:{MUT}">{esc(p[:44])}{nf(code)}</span>'
+                            for p, code in v["paths"]) or "—"
         out.append(
-          f'<tr><td style="padding:11px 12px;border-bottom:1px solid {RULE};font:600 12px '
+          f'<tr><td class="c-when" style="padding:11px 12px;border-bottom:1px solid {RULE};font:600 12px '
           f'ui-monospace,monospace;color:{INK};white-space:nowrap;vertical-align:top">'
           f'{v["last"]:%H:%M}<div style="font-weight:400;font-size:10px;color:{FNT}">{esc(v["ip"])}</div></td>'
-          f'<td style="padding:11px 12px;border-bottom:1px solid {RULE};font:13px -apple-system,'
+          f'<td class="c-who" style="padding:11px 12px;border-bottom:1px solid {RULE};font:13px -apple-system,'
           f'Segoe UI,Arial,sans-serif;color:{INK};vertical-align:top">{who}{flg}</td>'
-          f'<td style="padding:11px 12px;border-bottom:1px solid {RULE};vertical-align:top;width:112px">'
+          f'<td class="c-dist" style="padding:11px 12px;border-bottom:1px solid {RULE};vertical-align:top;width:112px">'
           f'<div style="font:600 12px ui-monospace,monospace;color:{col}">{dtxt}</div>{bar}'
           f'<div style="font:9px ui-monospace,monospace;color:{FNT};margin-top:3px">{lbl}</div></td>'
-          f'<td style="padding:11px 12px;border-bottom:1px solid {RULE};font:11px -apple-system,'
+          f'<td class="c-net" style="padding:11px 12px;border-bottom:1px solid {RULE};font:11px -apple-system,'
           f'Segoe UI,Arial,sans-serif;color:{MUT};vertical-align:top">{esc(v["isp"][:28]) or "—"}'
-          f'<div style="font:10px ui-monospace,monospace;color:{FNT};margin-top:3px">{paths}</div></td>'
-          f'<td style="padding:11px 12px;border-bottom:1px solid {RULE};font:600 14px ui-monospace,'
-          f'monospace;color:{A};text-align:right;vertical-align:top">{v["hits"]}</td></tr>')
+          f'<span class="m" style="display:none;font:10px ui-monospace,monospace;color:{FNT}"> &middot; {esc(v["ip"])}</span>'
+          f'<div class="brk" style="font:10px ui-monospace,monospace;color:{FNT};margin-top:3px">{paths}</div></td>'
+          f'<td class="c-hits" style="padding:11px 12px;border-bottom:1px solid {RULE};font:600 14px ui-monospace,'
+          f'monospace;color:{A};text-align:right;vertical-align:top">{v["hits"]}'
+          f'<span class="m" style="display:none"> hit{"" if v["hits"] == 1 else "s"}</span></td></tr>')
     if not out:
         out = [f'<tr><td colspan="5" style="padding:24px;text-align:center;color:{FNT};'
                f'font:13px -apple-system,Segoe UI,Arial,sans-serif">{empty}</td></tr>']
@@ -461,9 +518,9 @@ def banned_section(rows, th):
             f'<div style="font:600 11px/1 ui-monospace,monospace;letter-spacing:.09em;'
             f'text-transform:uppercase;color:#b3261e;padding-bottom:8px">Banned by fail2ban '
             f'&middot; {len(rows)}</div>'
-            f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};'
+            f'<table class="sec cards" width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};'
             f'border:1px solid {RULE};border-left:3px solid #b3261e;border-collapse:collapse">'
-            f'<tr style="background:{BG}"><th align="left" style="{th}">When</th>'
+            f'<tr class="hd" style="background:{BG}"><th align="left" style="{th}">When</th>'
             f'<th align="left" style="{th}">Who / where</th><th align="left" style="{th}">From {HOME_OUTCODE}</th>'
             f'<th align="left" style="{th}">Network &amp; pages</th><th align="right" style="{th}">Hits</th></tr>'
             f'{rows_html(rows)}</table>'
@@ -478,6 +535,14 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
     vis = [v for v in vis if not v.get("banned")]
     guests = [v for v in vis if not v.get("known")]
     others = guests
+    shown = sorted((v for v in vis if v["hits"] >= MIN_HITS or v.get("known")
+                    or (v.get("dist") is not None and v["dist"] <= NEAR_KM)),
+                   key=lambda v: (-v["hits"], v["dist"] if v.get("dist") is not None else 1e9))
+    quiet = len(vis) - len(shown)
+    quiet_note = (f'<div style="font:11px/1.6 ui-monospace,monospace;color:{FNT};margin-top:6px">'
+                  f'{quiet} more visitor{"" if quiet == 1 else "s"} with fewer than {MIN_HITS} page views '
+                  f'{"is" if quiet == 1 else "are"} not listed (counted in the tiles above). '
+                  f'Anyone within {NEAR_KM} km is always listed.</div>') if quiet else ""
     local = sorted([v for v in others if v.get("dist") is not None and v["dist"] <= NEAR_KM],
                    key=lambda v: v["dist"])
     gu = [v for v in others if v.get("is_gu")]
@@ -502,16 +567,36 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
         f' &middot; {v["dist"]:.0f}km</span>' for v in gu) or \
         f'<span style="color:{FNT};font:12px -apple-system,Segoe UI,Arial,sans-serif">none today</span>'
 
-    top = Counter(r["path"] for r in pages).most_common(7)
+    # Most read = pages actually served. Requests answered 404 or 410 (old WordPress addresses,
+    # probes) get their own table instead; redirects and refusals are in neither (RP, 28 Nov 2026).
+    top = Counter(r["path"] for r in pages if r.get("status") in SERVED).most_common(7)
+    missing = Counter(r["path"] for r in pages if r.get("status") in GONE)
+    miss_title = (f'Not found (404 / 410) &middot; {sum(missing.values())} request{"" if sum(missing.values()) == 1 else "s"} '
+                  f'for {len(missing)} address{"" if len(missing) == 1 else "es"}'
+                  + (f' &middot; top {NOT_FOUND_ROWS}' if len(missing) > NOT_FOUND_ROWS else ''))
     refs = Counter(r["ref"] for r in pages
                    if r["ref"] not in ("-", "") and label not in r["ref"]).most_common(5)
     ctry = Counter(v["country"] for v in others if v["country"]).most_common(5)
 
     def stat(n, l, c=INK):
-        return (f'<td style="padding:13px 14px;background:{SURF};border:1px solid {RULE};'
-                f'text-align:center"><div style="font:700 25px/1 -apple-system,Segoe UI,Arial,'
-                f'sans-serif;color:{c}">{n}</div><div style="font:500 9px/1.4 ui-monospace,monospace;'
+        return (f'<td class="tile" style="padding:13px 14px;background:{SURF};border:1px solid {RULE};'
+                f'text-align:center"><div class="tn" style="font:700 25px/1 -apple-system,Segoe UI,Arial,'
+                f'sans-serif;color:{c}">{n}</div><div class="tl" style="font:500 9px/1.4 ui-monospace,monospace;'
                 f'letter-spacing:.09em;text-transform:uppercase;color:{FNT};margin-top:5px">{l}</div></td>')
+
+    # Tiles separated by 6 px spacer cells (not border-spacing, which also inset the row by 6 px at
+    # each end so it never lined up with the boxes below). On a phone they stay on ONE row, equal
+    # widths, smaller type (RP, 28 Nov 2026).
+    tl = [stat(len(guests), "Visitors", A), stat(len(pages), "Page views"),
+          stat(len({v["country"] for v in others if v["country"]}), "Countries"),
+          stat(len(banned_rows), "Banned", "#b3261e"),
+          stat(contacts, "Contacts sent", "#15803d" if contacts else FNT)]
+    if clicks is not None:
+        tl.append(stat(clicks[0], OUTBOUND[label][1], "#1d4ed8" if clicks[0] else FNT))
+    tl.append(stat(len(bots), "Bot hits", FNT))
+    tiles = (f'<table class="tiles" width="100%" cellpadding="0" cellspacing="0"><tr>'
+             + '<td class="gap" width="6" style="width:6px;font-size:0;line-height:0">&nbsp;</td>'.join(tl)
+             + '</tr></table>')
 
     def box(title, items, href=None):
         if not items:
@@ -520,11 +605,11 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
             f'<tr><td style="padding:7px 12px;border-bottom:1px solid {RULE};font:13px -apple-system,'
             f'Segoe UI,Arial,sans-serif;color:{INK}">'
             f'{link(str(k)[:56], href(k), INK) if href else esc(str(k)[:56])}</td>'
-            f'<td align="right" style="padding:7px 12px;border-bottom:1px solid {RULE};'
+            f'<td align="right" style="padding:7px 12px;border-bottom:1px solid {RULE};white-space:nowrap;'
             f'font:600 13px ui-monospace,monospace;color:{A}">{n}</td></tr>' for k, n in items)
         return (f'<tr><td style="padding-top:20px"><div style="font:600 11px/1 ui-monospace,monospace;'
                 f'letter-spacing:.09em;text-transform:uppercase;color:{FNT};padding-bottom:8px">{title}</div>'
-                f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};'
+                f'<table class="sec" width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};'
                 f'border:1px solid {RULE};border-collapse:collapse">{li}</table></td></tr>')
 
     th = (f'padding:8px 12px;font:600 9px ui-monospace,monospace;letter-spacing:.09em;'
@@ -552,8 +637,8 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
         title = f'Tracked visits &middot; {n} in 24 h' + (', newest 20 shown' if n > 20 else '')
         return (f'<tr><td style="padding-top:22px"><div style="font:600 11px/1 ui-monospace,monospace;'
                 f'letter-spacing:.09em;text-transform:uppercase;color:{FNT};padding-bottom:8px">{title}</div>'
-                f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
-                f'border-collapse:collapse"><tr style="background:{BG}">'
+                f'<table class="sec cards" width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
+                f'border-collapse:collapse"><tr class="hd" style="background:{BG}">'
                 f'<th align="left" style="{th}">When</th><th align="left" style="{th}">Who / where</th>'
                 f'<th align="left" style="{th}">Page</th><th align="left" style="{th}">Browser / OS / device</th></tr>'
                 f'{body}</table>'
@@ -561,8 +646,8 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
                 f'From track.php rows in MySQL (visits.events), not the access log; crawlers and the uptime monitor excluded.</div>'
                 f'</td></tr>')
 
-    return f'''<!doctype html><html><body style="margin:0;padding:0;background:{BG}">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:{BG};padding:24px 12px">
+    return f'''<!doctype html><html><head>{MOBILE_CSS}</head><body style="margin:0;padding:0;background:{BG}">
+<table class="wrap" width="100%" cellpadding="0" cellspacing="0" style="background:{BG};padding:24px 12px">
 <tr><td align="center"><table width="650" cellpadding="0" cellspacing="0" style="max-width:650px;width:100%">
 
 <tr><td style="padding-bottom:18px"><table cellpadding="0" cellspacing="0"><tr>
@@ -578,13 +663,7 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
   <div style="font:13px -apple-system,Segoe UI,Arial,sans-serif;color:{MUT};margin-top:2px">{day}</div>
  </td></tr></table></td></tr>
 
-<tr><td><table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;
- border-spacing:6px 0"><tr>{stat(len(guests), "Visitors", A)}{stat(len(pages), "Page views")}
- {stat(len({v["country"] for v in others if v["country"]}), "Countries")}
- {stat(len(banned_rows), "Banned", "#b3261e")}
- {stat(contacts, "Contacts sent", "#15803d" if contacts else FNT)}
- {stat(clicks[0], OUTBOUND[label][1], "#1d4ed8" if clicks[0] else FNT) if clicks is not None else ""}
- {stat(len(bots), "Bot hits", FNT)}</tr></table></td></tr>
+<tr><td>{tiles}</td></tr>
 {status}
 
 <tr><td style="padding-top:22px">
@@ -599,13 +678,13 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
 
 <tr><td style="padding-top:22px">
  <div style="font:600 11px/1 ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;
-  color:{FNT};padding-bottom:8px">Every visitor</div>
- <table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};
-  border-collapse:collapse"><tr style="background:{BG}">
+  color:{FNT};padding-bottom:8px">Visitors &middot; busiest first</div>
+ <table class="sec cards" width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};
+  border-collapse:collapse"><tr class="hd" style="background:{BG}">
   <th align="left" style="{th}">When</th><th align="left" style="{th}">Who / where</th>
   <th align="left" style="{th}">From {HOME_OUTCODE}</th>
   <th align="left" style="{th}">Network &amp; pages</th><th align="right" style="{th}">Hits</th></tr>
-  {rows_html(vis)}</table></td></tr>
+  {rows_html(shown, "No visitor read " + str(MIN_HITS) + " or more pages in the last 24 hours." if vis else "No human visitors in the last 24 hours.")}</table>{quiet_note}</td></tr>
 
 {banned_section(banned_rows, th)}
 
@@ -614,7 +693,7 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
 
 {tracked_box(tracked)}
 
-{box("Most read", top, lambda k: label + k)}{box("Came from", refs, https)}{box("Countries", ctry)}
+{box("Most read", top, lambda k: label + k)}{box(miss_title, missing.most_common(NOT_FOUND_ROWS))}{box("Came from", refs, https)}{box("Countries", ctry)}
 
 <tr><td style="padding-top:24px;border-top:1px solid {RULE}">
  <div style="font:11px/1.65 ui-monospace,monospace;color:{FNT}">
@@ -719,7 +798,7 @@ def countries_box(rows, th):
         return ""
     tdc = (f'padding:7px 12px;border-bottom:1px solid {RULE};font:13px -apple-system,Segoe UI,Arial,'
            f'sans-serif;color:{INK};vertical-align:middle')
-    num = f'{tdc};font:600 13px ui-monospace,monospace;text-align:right'
+    num = f'{tdc};font:600 13px ui-monospace,monospace;text-align:right;white-space:nowrap'
     top_n = rows[0][1] or 1
 
     def bar(b):
@@ -739,7 +818,7 @@ def countries_box(rows, th):
     return (f'<tr><td style="padding-top:16px"><div style="font:600 11px/1 ui-monospace,monospace;letter-spacing:.09em;'
             f'text-transform:uppercase;color:{FNT};padding-bottom:8px">Top countries of bans &middot; '
             f'{len(rows)} countr{"y" if len(rows) == 1 else "ies"} &middot; last 24 h</div>'
-            f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
+            f'<table class="sec" width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
             f'border-collapse:collapse"><tr style="background:{BG}"><th align="left" style="{th}">Country</th>'
             f'<th style="{th}"></th><th align="right" style="{th}">Bans</th><th align="right" style="{th}">IPs</th></tr>'
             f'{body}</table></td></tr>')
@@ -760,7 +839,7 @@ def fail2ban_box(f2b, label, site_ips, gcache, th):
     """Jails + top offenders, identical in every email except the 'hit this site' chips."""
     tdc = (f'padding:7px 12px;border-bottom:1px solid {RULE};font:13px -apple-system,Segoe UI,Arial,'
            f'sans-serif;color:{INK};vertical-align:top')
-    num = f'{tdc};font:600 13px ui-monospace,monospace;text-align:right'
+    num = f'{tdc};font:600 13px ui-monospace,monospace;text-align:right;white-space:nowrap'
     sub = f'font:11px ui-monospace,monospace;color:{FNT}'
     chip = (f'<span style="display:inline-block;font:600 9px/1.5 ui-monospace,monospace;color:#fff;'
             f'background:{A};padding:1px 6px;border-radius:2px;margin-left:5px">hit this site</span>')
@@ -789,7 +868,7 @@ def fail2ban_box(f2b, label, site_ips, gcache, th):
     hits = sum(1 for ip, _, _ in f2b["top"] if ip in site_ips)
     head = (f'<div style="font:600 11px/1 ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;'
             f'color:{FNT};padding-bottom:8px">')
-    tbl = (f'<table width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
+    tbl = (f'<table class="sec" width="100%" cellpadding="0" cellspacing="0" style="background:{SURF};border:1px solid {RULE};'
            f'border-collapse:collapse">')
     return (f'<tr><td style="padding-top:22px">{head}Fail2Ban &middot; last 24 h &middot; jails</div>{tbl}'
             f'<tr style="background:{BG}"><th align="left" style="{th}">Jail</th><th align="right" style="{th}">Banned now</th>'
@@ -1027,7 +1106,7 @@ def status_html(bk, gt, db, fb, gi, wf):
                 f'color:{FNT}">{lab}</span>&nbsp;&nbsp;'
                 f'<span style="font:600 13px -apple-system,Segoe UI,Arial,sans-serif;color:{c}">{esc(head)}</span>'
                 f'<div style="font:11px/1.5 ui-monospace,monospace;color:{MUT};margin-top:2px">{esc(detail)}</div></td></tr>')
-    return (f'<tr><td style="padding-top:16px"><table width="100%" cellpadding="0" cellspacing="0" '
+    return (f'<tr><td style="padding-top:16px"><table class="sec" width="100%" cellpadding="0" cellspacing="0" '
             f'style="background:{SURF};border:1px solid {RULE};border-collapse:collapse">'
             f'{row("Backup", *bk)}{row("Code", *gt)}{row("MySQL", *db)}{row("Fail2Ban", *fb)}{row("GeoIP", *gi)}{row("WAF", *wf)}</table></td></tr>')
 
