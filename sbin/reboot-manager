@@ -5,8 +5,11 @@ A port of FFC's ffc-reboot-manager (FFC-20) to ropo.uk and robertpowell.net (RoP
 "All boxes to follow the FFC design"). One script; each box's details are in
 /etc/reboot-manager.json (host name, services, ports, nft tables, URLs, busy checks, time).
 
-  reboot-manager auto        root cron, daily at the box's slot. If unattended-upgrades has
-                             flagged a reboot, send a Pushover saying what and why, then reboot.
+  reboot-manager auto        root cron, daily at the box's slot. First restarts the services
+                             needrestart left running on replaced libraries that are safe to
+                             restart (config "needrestart_restart"). Then, if unattended-upgrades
+                             flagged a reboot OR a service only a reboot can refresh (dbus) still
+                             runs replaced libraries, send a Pushover saying what and why, then reboot.
   reboot-manager post-boot   root cron @reboot. Waits for services to settle, runs the health
                              checks and sends "rebooted OK" (or what failed). Also reports
                              reboots nobody scheduled.
@@ -38,6 +41,12 @@ LAST_AUTO = f"{STATE_DIR}/last-auto-reboot"
 REBOOT_FLAG = "/var/run/reboot-required"
 REBOOT_PKGS = "/var/run/reboot-required.pkgs"
 SETTLE_SECONDS = 120
+# Services needrestart lists but will not restart itself (its built-in deny list covers ^dbus and
+# ^network*, and it cannot restart unattended-upgrades mid-upgrade) and that ARE safe to restart
+# here. Anything else needrestart lists (dbus.service) can only be refreshed by the reboot.
+# Added 27 Nov 2026 (SR-26ff03fb: libexpat1 update left dbus/networkd-dispatcher/unattended-upgrades
+# on the old library with no reboot flag, so nothing would ever have cleared it).
+NEEDRESTART_SAFE_DEFAULT = ["networkd-dispatcher.service", "unattended-upgrades.service"]
 
 C = json.load(open(CONF))
 HOST = C["host"]
@@ -84,6 +93,27 @@ def newest_kernel():
     return sorted(ks, key=key)[-1] if ks else "?"
 
 
+def stale_services():
+    """Services needrestart says still run replaced libraries (empty if none, or no needrestart)."""
+    rc, out = sh(["needrestart", "-b"], 180)
+    return sorted({l.split(":", 1)[1].strip() for l in out.splitlines() if l.startswith("NEEDRESTART-SVC:")})
+
+
+def restart_stale_services(dry=False):
+    """Restart the stale services that are safe to restart; return the ones only a reboot can fix."""
+    hold = []
+    for s in stale_services():
+        if s not in C.get("needrestart_restart", NEEDRESTART_SAFE_DEFAULT):
+            hold.append(s)
+        elif dry:
+            log(f"(dry run: would restart {s}, still running replaced libraries)")
+        else:
+            rc, out = sh(["systemctl", "restart", s], 120)
+            log(f"restarted {s} (was running replaced libraries)" if rc == 0
+                else f"restart of {s} FAILED rc={rc}: {out}")
+    return hold
+
+
 def busy():
     """Reasons not to reboot right now, or [] if it is safe."""
     why = []
@@ -98,9 +128,12 @@ def busy():
 
 
 def auto(dry=False):
-    if not os.path.exists(REBOOT_FLAG):
+    hold = restart_stale_services(dry)
+    if not os.path.exists(REBOOT_FLAG) and not hold:
         log("no reboot required")
         return 0
+    if hold:
+        log(f"reboot needed: {', '.join(hold)} still running replaced libraries (needrestart will not restart them)")
     if not C.get("enabled") and not dry:
         log("a reboot is required but automatic reboots are OFF (\"enabled\" in %s)" % CONF)
         return 0
@@ -122,6 +155,7 @@ def auto(dry=False):
         pkgs = sorted(set(open(REBOOT_PKGS).read().split()))
     except OSError:
         pkgs = []
+    pkgs += [f"{s} (replaced libraries)" for s in hold]
     running, target = os.uname().release, newest_kernel()
     if reasons:
         pushover(f"{HOST}: reboot postponed",
@@ -183,6 +217,9 @@ def checks():
         rc, out = sh(["/snap/bin/canonical-livepatch", "status"], 30)
         lp_ok = rc == 0 and "running: true" in out and "checkState: checked" in out
         (ok if lp_ok else bad).append("livepatch" if lp_ok else "livepatch not running/checked")
+    stale = stale_services()
+    (bad if stale else ok).append(f"running replaced libraries: {' '.join(stale)}" if stale
+                                  else "no service on replaced libraries")
     running, newest = os.uname().release, newest_kernel()
     (ok if running == newest else bad).append(f"kernel {running}" if running == newest
                                               else f"running {running}, newest installed {newest}")
