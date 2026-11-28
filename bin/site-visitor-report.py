@@ -449,6 +449,7 @@ body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 # Your own addresses and anyone within NEAR_KM are always listed, however few pages they read; the
 # rest are counted in the tiles and summed in a line under the table.
 MIN_HITS = 5
+MIN_ROWS = 10         # the busiest ten are always listed, so a quiet site's list is never empty
 NOT_FOUND_ROWS = 12   # rows in the "Not found" table
 SERVED = ("200", "206", "304")   # counts towards "Most read"
 GONE = ("404", "410")            # tagged in visitor rows and listed under "Not found"
@@ -535,9 +536,10 @@ def render_site(label, vis, pages, bots, day, home, watch_ring, contacts=0, stat
     vis = [v for v in vis if not v.get("banned")]
     guests = [v for v in vis if not v.get("known")]
     others = guests
-    shown = sorted((v for v in vis if v["hits"] >= MIN_HITS or v.get("known")
-                    or (v.get("dist") is not None and v["dist"] <= NEAR_KM)),
-                   key=lambda v: (-v["hits"], v["dist"] if v.get("dist") is not None else 1e9))
+    by_hits = sorted(vis, key=lambda v: (-v["hits"], v["dist"] if v.get("dist") is not None else 1e9))
+    shown = [v for i, v in enumerate(by_hits)
+             if i < MIN_ROWS or v["hits"] >= MIN_HITS or v.get("known")
+             or (v.get("dist") is not None and v["dist"] <= NEAR_KM)]
     quiet = len(vis) - len(shown)
     quiet_note = (f'<div style="font:11px/1.6 ui-monospace,monospace;color:{FNT};margin-top:6px">'
                   f'{quiet} more visitor{"" if quiet == 1 else "s"} with fewer than {MIN_HITS} page views '
